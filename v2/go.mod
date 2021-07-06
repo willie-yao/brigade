@@ -18,10 +18,10 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gosuri/uitable v0.0.4
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.0.0-20200921180117-858c6e7e6b7e // indirect
+	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rs/cors v1.7.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.6.1
