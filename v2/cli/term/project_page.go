@@ -43,8 +43,8 @@ func newProjectPage(
 	// Create the layout
 	p.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(p.projectInfo, 0, 1, false).
-		AddItem(p.eventsTable, 0, 6, true).
+		AddItem(p.projectInfo, 0, 2, false).
+		AddItem(p.eventsTable, 0, 9, true).
 		AddItem(p.usage, 1, 1, false)
 	return p
 }
@@ -97,9 +97,11 @@ func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.SetText(
 		fmt.Sprintf(
 			"[yellow]Project: [white]%s\n"+
-				"[yellow]Description: [white]%s",
+				"[yellow]Description: [white]%s\n"+
+				"[yellow]Time Created: [white]%s",
 			project.ID,
 			project.Description,
+			project.Created.Local().Format("2006-01-02 15:04:05"),
 		),
 	)
 }
