@@ -94,7 +94,14 @@ func (p *projectPage) refresh(projectID string) {
 
 func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.Clear()
-	p.projectInfo.SetText(fmt.Sprintf("[yellow]Project: [white]%s", project.ID))
+	p.projectInfo.SetText(
+		fmt.Sprintf(
+			"[yellow]Project: [white]%s\n"+
+				"[yellow]Description: [white]%s",
+			project.ID,
+			project.Description,
+		),
+	)
 }
 
 func (p *projectPage) fillEventsTable(events core.EventList) {
