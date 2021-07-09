@@ -103,7 +103,7 @@ func (p *projectPage) fillProjectInformation(project core.Project) {
 				"[yellow]Time Created: [white]%s",
 			project.ID,
 			project.Description,
-			project.Created.Local().Format("2006-01-02 15:04:05"),
+			formatDateTimeToString(*project.Created),
 		),
 	)
 }
@@ -176,4 +176,10 @@ func (p *projectPage) fillEventList(events core.EventList) {
 			p.router.LoadEventPage(eventID)
 		}
 	})
+}
+
+// formatDateTimeToString formats a time object to YYYY-MM-DD HH:MM:SS
+// and returns it as a string
+func formatDateTimeToString(time time.Time) string {
+	return time.UTC().Format("2006-01-02 15:04:05")
 }
