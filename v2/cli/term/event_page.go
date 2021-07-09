@@ -42,8 +42,8 @@ func newEventPage(
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(e.eventInfo, 0, 1, false).
-		AddItem(e.jobsTable, 0, 4, true).
+		AddItem(e.eventInfo, 0, 3, false).
+		AddItem(e.jobsTable, 0, 6, true).
 		AddItem(e.usage, 1, 1, false)
 	return e
 }
@@ -82,9 +82,21 @@ func (e *eventPage) refresh(eventID string) {
 
 }
 
-func (e *eventPage) fillEventInfo(_ core.Event) {
+func (e *eventPage) fillEventInfo(event core.Event) {
 	e.eventInfo.Clear()
-	// TODO: Fill the event information.
+	e.eventInfo.SetText(fmt.Sprintf("[yellow]Event: [white]%s", event.ID))
+	e.eventInfo.SetText(
+		fmt.Sprintf(
+			"[yellow]Project: [white]%s\n"+
+				"[yellow]Source: [white]%s\n"+
+				"[yellow]Type: [white]%s\n"+
+				"[yellow]Time Created: [white]%s",
+			event.ID,
+			event.Source,
+			event.Type,
+			event.Created.Local().Format("2006-01-02 15:04:05"),
+		),
+	)
 }
 
 func (e *eventPage) fillJobsTable(event core.Event) {
