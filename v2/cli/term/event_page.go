@@ -84,10 +84,9 @@ func (e *eventPage) refresh(eventID string) {
 
 func (e *eventPage) fillEventInfo(event core.Event) {
 	e.eventInfo.Clear()
-	e.eventInfo.SetText(fmt.Sprintf("[yellow]Event: [white]%s", event.ID))
 	e.eventInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Project: [white]%s\n"+
+			"[yellow]Event: [white]%s\n"+
 				"[yellow]Source: [white]%s\n"+
 				"[yellow]Type: [white]%s\n"+
 				"[yellow]Time Created: [white]%s",
@@ -95,6 +94,18 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 			event.Source,
 			event.Type,
 			event.Created.Local().Format("2006-01-02 15:04:05"),
+		),
+	)
+
+	e.eventTimeInfo.Clear()
+	e.eventTimeInfo.SetText(
+		fmt.Sprintf(
+			"[yellow]Time Created: [white]%s\n"+
+				"[yellow]Worker Started: [white]%s\n"+
+				"[yellow]Worker Ended: [white]%s\n",
+			event.Created.Local().Format("2006-01-02 15:04:05"),
+			event.Worker.Status.Started.Local().Format("2006-01-02 15:04:05"),
+			event.Worker.Status.Ended.Local().Format("2006-01-02 15:04:05"),
 		),
 	)
 }
