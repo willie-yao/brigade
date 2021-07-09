@@ -1,6 +1,8 @@
 package term
 
 import (
+	"time"
+
 	"github.com/brigadecore/brigade/sdk/v2/core"
 	"github.com/gdamore/tcell"
 )
@@ -98,4 +100,10 @@ func getIconFromJobPhase(phase core.JobPhase) string {
 	default:
 		return unknownIcon
 	}
+}
+
+// formatDateTimeToString formats a time object to YYYY-MM-DD HH:MM:SS
+// and returns it as a string
+func formatDateTimeToString(time time.Time) string {
+	return time.UTC().Format("2006-01-02 15:04:05")
 }
