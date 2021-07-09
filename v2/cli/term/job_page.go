@@ -11,53 +11,47 @@ import (
 
 const jobPageName = "job"
 
-const (
-	jobInfoFMT = `
-%[1]sJob: [white]%[2]s
-%[1]sID: [white]%[3]s
-%[1]sStarted: [white]%[4]s
-%[1]sDuration: [white]%[5]v`
-	jobLogUsage = `[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit`
-)
-
+// jobPage is a custom UI component that displays Job info and a list of
+// associated logs.
 type jobPage struct {
 	*page
-	// components.
-	jobsInfo *tview.TextView
-	logBox   *tview.TextView
-	usage    *tview.TextView
+	jobInfo *tview.TextView
+	logsBox *tview.TextView
+	usage   *tview.TextView
 }
 
-func newJobPage(apiClient core.APIClient, app *tview.Application, router PageRouter) *jobPage {
+// newJobPage returns a custom UI component that displays Job info and a list of
+// associated logs.
+func newJobPage(
+	apiClient core.APIClient,
+	app *tview.Application,
+	router *pageRouter,
+) *jobPage {
 	j := &jobPage{
-		page: newPage(apiClient, app, router),
+		page:    newPage(apiClient, app, router),
+		jobInfo: tview.NewTextView().SetDynamicColors(true),
+		logsBox: tview.NewTextView().SetDynamicColors(true),
+		usage: tview.NewTextView().SetDynamicColors(true).SetText(
+			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
+		),
 	}
-
-	j.jobsInfo = tview.NewTextView().
-		SetDynamicColors(true)
-	j.jobsInfo.SetBorder(true).
-		SetBorderColor(tcell.ColorYellow)
-
-	j.logBox = tview.NewTextView().
-		SetDynamicColors(true).SetChangedFunc(func() {
-		j.app.Draw()
-	})
-	j.logBox.SetBorder(true).
-		SetTitle("Log")
-
-	j.usage = tview.NewTextView().
-		SetDynamicColors(true)
-
-	// Create the layout.
+	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
+	j.logsBox.SetChangedFunc(
+		func() {
+			j.app.Draw()
+		},
+	)
+	j.logsBox.SetBorder(true).SetTitle("Logs")
+	// Create the layout
 	j.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(j.jobsInfo, 0, 1, false).
-		AddItem(j.logBox, 0, 5, true).
+		AddItem(j.jobInfo, 0, 1, false).
+		AddItem(j.logsBox, 0, 5, true).
 		AddItem(j.usage, 1, 1, false)
-
 	return j
 }
 
+// refresh refreshes Job info and repaints the page.
 func (j *jobPage) refresh(eventID, jobName string) {
 	event, err := j.apiClient.Events().Get(context.TODO(), eventID)
 	if err != nil {
@@ -67,70 +61,54 @@ func (j *jobPage) refresh(eventID, jobName string) {
 	if !found {
 		// TODO: Handle this
 	}
-
-	// Everything seems ok, fill everything.
-	j.fill(eventID, job)
-
-	// Set key handlers.
-	j.logBox.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	j.fillJobInfo(job)
+	j.fillLogs(eventID, job.Name)
+	// Set key handlers
+	j.logsBox.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		// Reload.
-		case tcell.KeyF5:
-			j.router.LoadJobPage(eventID, jobName)
-		// Back.
-		case tcell.KeyLeft, tcell.KeyDelete, tcell.KeyBackspace, tcell.KeyBackspace2:
-			j.router.LoadEventPage(eventID)
-		// Home.
-		case tcell.KeyEsc:
-			j.router.LoadProjectsPage()
-		// Regular keys handling:
-		case tcell.KeyRune:
+		case tcell.KeyF5: // Reload
+			j.router.loadJobPage(eventID, jobName)
+		case // Back
+			tcell.KeyLeft,
+			tcell.KeyDelete,
+			tcell.KeyBackspace,
+			tcell.KeyBackspace2:
+			j.router.loadEventPage(eventID)
+		case tcell.KeyEsc: // Home
+			j.router.loadProjectsPage()
+		case tcell.KeyRune: // Regular key handling:
 			switch event.Rune() {
-			// Reload.
-			case 'r', 'R':
-				j.router.LoadJobPage(eventID, jobName)
-			// Exit
-			case 'q', 'Q':
-				j.router.Exit()
+			case 'r', 'R': // Reload
+				j.router.loadJobPage(eventID, jobName)
+			case 'q', 'Q': // Exit
+				j.router.exit()
 			}
 		}
 		return event
 	})
 }
 
-func (j *jobPage) fill(eventID string, job core.Job) {
-	j.fillUsage()
-	j.fillJobInfo(job)
-	j.fillLog(eventID, job.Name)
-}
-
-func (j *jobPage) fillUsage() {
-	j.usage.Clear()
-	j.usage.SetText(jobLogUsage)
-}
-
 func (j *jobPage) fillJobInfo(job core.Job) {
 	color := getColorFromJobPhase(job.Status.Phase)
 	textColor := getTextColorFromJobPhase(job.Status.Phase)
-	j.jobsInfo.SetBorderColor(color)
-
-	j.jobsInfo.Clear()
+	j.jobInfo.SetBorderColor(color)
+	j.jobInfo.Clear()
 	info := fmt.Sprintf(
-		jobInfoFMT,
+		"%[1]sJob: [white]%[2]s\n%[1]sStarted: [white]%[3]s\n%[1]sDuration: [white]%[4]v", // nolint: lll
 		textColor,
-		job.Name,
 		job.Name,
 		job.Status.Started,
 		job.Status.Ended.Sub(*job.Status.Started),
 	)
-	j.jobsInfo.SetText(info)
+	j.jobInfo.SetText(info)
 }
 
-func (j *jobPage) fillLog(eventID, jobName string) {
-	j.logBox.Clear()
+func (j *jobPage) fillLogs(eventID, jobName string) {
+	j.logsBox.Clear()
 	go j.streamLog(eventID, jobName)
 }
 
+// nolint: lll
 func (j *jobPage) streamLog(eventID, jobName string) {
 	// // Initialize control channels for the streaming.
 	// j.stopStreaming = make(chan struct{})

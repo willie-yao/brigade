@@ -19,10 +19,13 @@ func term(c *cli.Context) error {
 		return err
 	}
 	app := tview.NewApplication()
-	pageRouter := terminal.NewPageRouter(client.Core(), app)
-	pageRouter.LoadProjectsPage()
 	app.SetRoot(
-		tview.NewFlex().SetDirection(tview.FlexRow).AddItem(pageRouter, 0, 1, true),
+		tview.NewFlex().SetDirection(tview.FlexRow).AddItem(
+			terminal.NewPageRouter(client.Core(), app),
+			0,
+			1,
+			true,
+		),
 		true,
 	)
 	return app.Run()

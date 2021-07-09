@@ -9,15 +9,8 @@ import (
 	"github.com/rivo/tview"
 )
 
-type PageRouter interface {
-	tview.Primitive
-	LoadProjectsPage()
-	LoadProjectPage(projectID string)
-	LoadEventPage(eventID string)
-	LoadJobPage(eventID, jobID string)
-	Exit()
-}
-
+// pageRouter is a custom UI component composed of tview.Pages which can be
+// refreshed and brought into focus on command.
 type pageRouter struct {
 	*tview.Pages
 	projectsPage      *projectsPage
@@ -29,7 +22,12 @@ type pageRouter struct {
 	cancelRefreshFnMu sync.Mutex
 }
 
-func NewPageRouter(apiClient core.APIClient, app *tview.Application) PageRouter {
+// NewPageRouter returns a custom UI component composed of tview.Pages which
+// can be refreshed and brought into focus on command.
+func NewPageRouter(
+	apiClient core.APIClient,
+	app *tview.Application,
+) tview.Primitive {
 	r := &pageRouter{
 		Pages: tview.NewPages(),
 		app:   app,
@@ -42,44 +40,55 @@ func NewPageRouter(apiClient core.APIClient, app *tview.Application) PageRouter 
 	r.AddPage(eventPageName, r.eventPage, true, false)
 	r.jobPage = newJobPage(apiClient, app, r)
 	r.AddPage(jobPageName, r.jobPage, true, false)
+	r.loadProjectsPage()
 	return r
 }
 
-func (r *pageRouter) LoadProjectsPage() {
+// loadProjectsPage refreshes the projects page and brings it into focus.
+func (r *pageRouter) loadProjectsPage() {
 	r.loadPage(projectsPageName, func() {
 		r.projectsPage.refresh()
 	})
 }
 
-func (r *pageRouter) LoadProjectPage(projectID string) {
+// loadProjectPage refreshes the project page and brings it into focus.
+func (r *pageRouter) loadProjectPage(projectID string) {
 	r.loadPage(projectPageName, func() {
 		r.projectPage.refresh(projectID)
 	})
 }
 
-func (r *pageRouter) LoadEventPage(eventID string) {
+// loadEventPage refreshes the event page and brings it into focus.
+func (r *pageRouter) loadEventPage(eventID string) {
 	r.loadPage(eventPageName, func() {
 		r.eventPage.refresh(eventID)
 	})
 }
 
-func (r *pageRouter) LoadJobPage(eventID, jobID string) {
+// loadJobPage refreshes the job page and brings it into focus.
+func (r *pageRouter) loadJobPage(eventID, jobID string) {
 	r.loadPage(jobPageName, func() {
 		r.jobPage.refresh(eventID, jobID)
 	})
 }
 
+// loadPage can refresh any page and bring it into focus, given the name of the
+// page and a refresh function.
 func (r *pageRouter) loadPage(pageName string, fn func()) {
+	// This is a critical section of code. We only want one page auto-refreshing
+	// at a time.
 	r.cancelRefreshFnMu.Lock()
 	defer r.cancelRefreshFnMu.Unlock()
+	// If any page is already auto-refreshing, stop it
 	if r.cancelRefreshFn != nil {
 		r.cancelRefreshFn()
 	}
+	// Build a new context for the auto-refresh goroutine to use
 	var ctx context.Context
 	ctx, r.cancelRefreshFn = context.WithCancel(context.Background())
-	r.SwitchToPage(pageName)
-	fn()
-	go func() {
+	r.SwitchToPage(pageName) // Bring the page into focus
+	fn()                     // Synchronously refresh the page once
+	go func() {              // Start auto-refreshing
 		ticker := time.NewTicker(2 * time.Second)
 		for {
 			select {
@@ -92,6 +101,7 @@ func (r *pageRouter) loadPage(pageName string, fn func()) {
 	}()
 }
 
-func (r *pageRouter) Exit() {
+// exit stops the associated tview.Application.
+func (r *pageRouter) exit() {
 	r.app.Stop()
 }
