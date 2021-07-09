@@ -93,7 +93,7 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 			event.ID,
 			event.Source,
 			event.Type,
-			event.Created.Local().Format("2006-01-02 15:04:05"),
+			formatDateTimeToString(*event.Created),
 		),
 	)
 
@@ -104,8 +104,8 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 				"[yellow]Worker Started: [white]%s\n"+
 				"[yellow]Worker Ended: [white]%s\n",
 			event.Worker.Status.Phase,
-			event.Worker.Status.Started.Local().Format("2006-01-02 15:04:05"),
-			event.Worker.Status.Ended.Local().Format("2006-01-02 15:04:05"),
+			formatDateTimeToString(*event.Worker.Status.Started),
+			formatDateTimeToString(*event.Worker.Status.Ended),
 		),
 	)
 }
