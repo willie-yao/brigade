@@ -97,13 +97,13 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 		),
 	)
 
-	e.eventTimeInfo.Clear()
-	e.eventTimeInfo.SetText(
+	e.workerInfo.Clear()
+	e.workerInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Time Created: [white]%s\n"+
+			"[yellow]Worker Phase: [white]%s\n"+
 				"[yellow]Worker Started: [white]%s\n"+
 				"[yellow]Worker Ended: [white]%s\n",
-			event.Created.Local().Format("2006-01-02 15:04:05"),
+			event.Worker.Status.Phase,
 			event.Worker.Status.Started.Local().Format("2006-01-02 15:04:05"),
 			event.Worker.Status.Ended.Local().Format("2006-01-02 15:04:05"),
 		),
