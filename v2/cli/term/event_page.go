@@ -82,7 +82,7 @@ func (e *eventPage) refresh(eventID string) {
 
 }
 
-func (e *eventPage) fillEventInfo(event core.Event) {
+func (e *eventPage) fillEventInfo(_ core.Event) {
 	e.eventInfo.Clear()
 	// TODO: Fill the event information.
 }
