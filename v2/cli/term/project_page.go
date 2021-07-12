@@ -18,9 +18,11 @@ const projectPageName = "project"
 // associated Events.
 type projectPage struct {
 	*page
-	projectInfo *tview.TextView
-	eventsTable *tview.Table
-	usage       *tview.TextView
+	currentProjectID     string
+	projectInfo          *tview.TextView
+	eventsContinueValues []string // Stack of "continue" values to aid paging
+	eventsTable          *tview.Table
+	usage                *tview.TextView
 }
 
 // newProjectPage returns a custom UI component that displays Project info and a
@@ -31,12 +33,11 @@ func newProjectPage(
 	router *pageRouter,
 ) *projectPage {
 	p := &projectPage{
-		page:        newPage(apiClient, app, router),
-		projectInfo: tview.NewTextView().SetDynamicColors(true),
-		eventsTable: tview.NewTable().SetSelectable(true, false),
-		usage: tview.NewTextView().SetDynamicColors(true).SetText(
-			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
-		),
+		page:                 newPage(apiClient, app, router),
+		projectInfo:          tview.NewTextView().SetDynamicColors(true),
+		eventsContinueValues: []string{""}, // "" == continue value for first page
+		eventsTable:          tview.NewTable().SetSelectable(true, false),
+		usage:                tview.NewTextView().SetDynamicColors(true),
 	}
 	p.projectInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
 	p.eventsTable.SetBorder(true).SetTitle("Events")
@@ -51,6 +52,12 @@ func newProjectPage(
 
 // refresh refreshes Projects info and associated Events and repaints the page.
 func (p *projectPage) refresh(projectID string) {
+	if projectID != p.currentProjectID {
+		p.currentProjectID = projectID
+		// "" == continue value for first page
+		p.eventsContinueValues = []string{""}
+	}
+
 	project, err := p.apiClient.Projects().Get(context.TODO(), projectID)
 	if err != nil {
 		// TODO: Handle this
@@ -60,13 +67,17 @@ func (p *projectPage) refresh(projectID string) {
 		&core.EventsSelector{
 			ProjectID: projectID,
 		},
-		&meta.ListOptions{},
+		&meta.ListOptions{
+			Continue: p.eventsContinueValues[len(p.eventsContinueValues)-1],
+			Limit:    20,
+		},
 	)
 	if err != nil {
 		// TODO: Handle this
 	}
 	p.fillProjectInfo(project)
 	p.fillEventsTable(events)
+	p.fillUsage(events)
 	// Set key handlers
 	p.eventsTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -83,6 +94,22 @@ func (p *projectPage) refresh(projectID string) {
 			switch event.Rune() {
 			case 'r', 'R': // Reload
 				p.router.loadProjectPage(projectID)
+			case 'p', 'P': // Previous page
+				// Pop the current page continue value from the stack, but never pop it
+				// if it's the only continue value. i.e. Never pop it if it's the empty
+				// continue value that gets you the first page.
+				if len(p.eventsContinueValues) > 1 {
+					p.eventsContinueValues =
+						p.eventsContinueValues[:len(p.eventsContinueValues)-1]
+					p.router.loadProjectPage(projectID)
+				}
+			case 'n', 'N': // Next page
+				if events.Continue != "" {
+					// Push the continue value for the next page onto the stack
+					p.eventsContinueValues =
+						append(p.eventsContinueValues, events.Continue)
+					p.router.loadProjectPage(projectID)
+				}
 			case 'q', 'Q': // Exit
 				p.router.exit()
 			}
@@ -104,6 +131,18 @@ func (p *projectPage) fillProjectInfo(project core.Project) {
 			formatDateTimeToString(*project.Created),
 		),
 	)
+}
+
+func (p *projectPage) fillUsage(events core.EventList) {
+	usageText := "[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home" // nolint: lll
+	if len(p.eventsContinueValues) > 1 {
+		usageText = fmt.Sprintf("%s    [yellow](P) [white]Previous Page", usageText)
+	}
+	if events.Continue != "" {
+		usageText = fmt.Sprintf("%s    [yellow](N) [white]Next Page", usageText)
+	}
+	usageText = fmt.Sprintf("%s    [yellow](Q) [white]Quit", usageText)
+	p.usage.SetText(usageText)
 }
 
 func (p *projectPage) fillEventsTable(events core.EventList) {

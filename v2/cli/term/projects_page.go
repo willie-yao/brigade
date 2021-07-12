@@ -2,6 +2,7 @@ package term
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/brigadecore/brigade/sdk/v2/core"
@@ -17,8 +18,9 @@ const projectsPageName = "projects"
 // Projects.
 type projectsPage struct {
 	*page
-	projectsTable *tview.Table
-	usage         *tview.TextView
+	projectsContinueValues []string // Stack of "continue" values to aid paging
+	projectsTable          *tview.Table
+	usage                  *tview.TextView
 }
 
 // newProjectsPage returns a custom UI component that displays the list of all
@@ -29,11 +31,10 @@ func newProjectsPage(
 	router *pageRouter,
 ) *projectsPage {
 	p := &projectsPage{
-		page:          newPage(apiClient, app, router),
-		projectsTable: tview.NewTable().SetSelectable(true, false),
-		usage: tview.NewTextView().SetDynamicColors(true).SetText(
-			"[yellow](F5) [white]Reload    [yellow](Q) [white]Quit",
-		),
+		page:                   newPage(apiClient, app, router),
+		projectsContinueValues: []string{""}, // "" == continue value for first page
+		projectsTable:          tview.NewTable().SetSelectable(true, false),
+		usage:                  tview.NewTextView().SetDynamicColors(true),
 	}
 	p.projectsTable.SetBorder(true).SetTitle("Projects")
 	// Create the layout
@@ -46,7 +47,14 @@ func newProjectsPage(
 
 // refresh refreshes the list of all Projects and repaints the page.
 func (p *projectsPage) refresh() {
-	projects, err := p.apiClient.Projects().List(context.TODO(), nil, nil)
+	projects, err := p.apiClient.Projects().List(
+		context.TODO(),
+		nil,
+		&meta.ListOptions{
+			Continue: p.projectsContinueValues[len(p.projectsContinueValues)-1],
+			Limit:    20,
+		},
+	)
 	if err != nil {
 		// TODO: Handle this
 	}
@@ -69,6 +77,7 @@ func (p *projectsPage) refresh() {
 		}
 	}
 	p.fillProjectsTable(projects, mostRecentEventByProject)
+	p.fillUsage(projects)
 	// Key handling...
 	p.projectsTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -78,12 +87,40 @@ func (p *projectsPage) refresh() {
 			switch event.Rune() {
 			case 'r', 'R': // Reload
 				p.router.loadProjectsPage()
+			case 'p', 'P': // Previous page
+				// Pop the current page continue value from the stack, but never pop it
+				// if it's the only continue value. i.e. Never pop it if it's the empty
+				// continue value that gets you the first page.
+				if len(p.projectsContinueValues) > 1 {
+					p.projectsContinueValues =
+						p.projectsContinueValues[:len(p.projectsContinueValues)-1]
+					p.router.loadProjectsPage()
+				}
+			case 'n', 'N': // Next page
+				if projects.Continue != "" {
+					// Push the continue value for the next page onto the stack
+					p.projectsContinueValues =
+						append(p.projectsContinueValues, projects.Continue)
+					p.router.loadProjectsPage()
+				}
 			case 'q', 'Q': // Exit
 				p.router.exit()
 			}
 		}
 		return event
 	})
+}
+
+func (p *projectsPage) fillUsage(projects core.ProjectList) {
+	usageText := "[yellow](F5) [white]Reload"
+	if len(p.projectsContinueValues) > 1 {
+		usageText = fmt.Sprintf("%s    [yellow](P) [white]Previous Page", usageText)
+	}
+	if projects.Continue != "" {
+		usageText = fmt.Sprintf("%s    [yellow](N) [white]Next Page", usageText)
+	}
+	usageText = fmt.Sprintf("%s    [yellow](Q) [white]Quit", usageText)
+	p.usage.SetText(usageText)
 }
 
 func (p *projectsPage) fillProjectsTable(
