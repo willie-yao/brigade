@@ -17,9 +17,10 @@ const eventPageName = "event"
 // associated Jobs.
 type eventPage struct {
 	*page
-	eventInfo *tview.TextView
-	jobsTable *tview.Table
-	usage     *tview.TextView
+	eventInfo  *tview.TextView
+	workerInfo *tview.TextView
+	jobsTable  *tview.Table
+	usage      *tview.TextView
 }
 
 // newEventPage returns a custom UI component that displays Event info and a
@@ -30,20 +31,29 @@ func newEventPage(
 	router *pageRouter,
 ) *eventPage {
 	e := &eventPage{
-		page:      newPage(apiClient, app, router),
-		eventInfo: tview.NewTextView().SetDynamicColors(true),
-		jobsTable: tview.NewTable().SetSelectable(true, false),
+		page:       newPage(apiClient, app, router),
+		eventInfo:  tview.NewTextView().SetDynamicColors(true),
+		workerInfo: tview.NewTextView().SetDynamicColors(true),
+		jobsTable:  tview.NewTable().SetSelectable(true, false),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
 	}
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
+	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(e.eventInfo, 0, 3, false).
-		AddItem(e.jobsTable, 0, 6, true).
+		AddItem(
+			tview.NewFlex().
+				AddItem(e.eventInfo, 0, 1, false).
+				AddItem(e.workerInfo, 0, 1, false),
+			0,
+			1,
+			false,
+		).
+		AddItem(e.jobsTable, 0, 3, true).
 		AddItem(e.usage, 1, 1, false)
 	return e
 }
