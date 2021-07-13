@@ -100,18 +100,29 @@ func (e *eventPage) refresh(eventID string) {
 }
 
 func (e *eventPage) fillEventInfo(event core.Event) {
+
 	e.eventInfo.Clear()
 	e.eventInfo.SetTitle(fmt.Sprintf("[yellow]Event: [white]%s\n", event.ID))
-	e.eventInfo.SetText(
-		fmt.Sprintf(
-			"[yellow]Source: [white]%s\n"+
-				"[yellow]Type: [white]%s\n"+
-				"[yellow]Time Created: [white]%s",
-			event.Source,
-			event.Type,
-			formatDateTimeToString(*event.Created),
-		),
+	eventText := fmt.Sprintf(
+		"[yellow]Source: [white]%s\n"+
+			"[yellow]Type: [white]%s\n"+
+			"[yellow]Time Created: [white]%s",
+		event.Source,
+		event.Type,
+		formatDateTimeToString(*event.Created),
 	)
+
+	// Add qualifiers (if any) to event info box
+	for k, v := range event.Qualifiers {
+		eventText = eventText + fmt.Sprintf("\n[yellow]%s: [white]%s", k, v)
+	}
+
+	// Add labels (if any) to event info box
+	for k, v := range event.Labels {
+		eventText = eventText + fmt.Sprintf("\n[yellow]%s: [white]%s", k, v)
+	}
+
+	e.eventInfo.SetText(eventText)
 
 	e.workerInfo.Clear()
 	e.workerInfo.SetText(
