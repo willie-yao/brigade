@@ -66,6 +66,13 @@ func (e *eventPage) refresh(eventID string) {
 	}
 	e.fillEventInfo(event)
 	e.fillJobsTable(event)
+
+	// Set color of event and job boxes to match with current worker status
+	workerPhaseColor := getColorFromWorkerPhase(event.Worker.Status.Phase)
+	e.eventInfo.SetBorderColor(workerPhaseColor)
+	e.workerInfo.SetBorderColor(workerPhaseColor)
+	e.jobsTable.SetBorderColor(workerPhaseColor)
+
 	// Set key handlers
 	e.jobsTable.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
 		switch evt.Key() {
