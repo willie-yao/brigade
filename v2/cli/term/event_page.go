@@ -94,13 +94,12 @@ func (e *eventPage) refresh(eventID string) {
 
 func (e *eventPage) fillEventInfo(event core.Event) {
 	e.eventInfo.Clear()
+	e.eventInfo.SetTitle(fmt.Sprintf("[yellow]Event: [white]%s\n", event.ID))
 	e.eventInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Event: [white]%s\n"+
-				"[yellow]Source: [white]%s\n"+
+			"[yellow]Source: [white]%s\n"+
 				"[yellow]Type: [white]%s\n"+
 				"[yellow]Time Created: [white]%s",
-			event.ID,
 			event.Source,
 			event.Type,
 			formatDateTimeToString(*event.Created),
