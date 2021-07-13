@@ -121,12 +121,11 @@ func (p *projectPage) refresh(projectID string) {
 
 func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.Clear()
+	p.projectInfo.SetTitle(fmt.Sprintf("[yellow]Project: [white]%s\n", project.ID))
 	p.projectInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Project: [white]%s\n"+
-				"[yellow]Description: [white]%s\n"+
+			"[yellow]Description: [white]%s\n"+
 				"[yellow]Time Created: [white]%s",
-			project.ID,
 			project.Description,
 			formatDateTimeToString(*project.Created),
 		),
