@@ -40,7 +40,8 @@ func newEventPage(
 		),
 	}
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
+	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
+		SetTitle("Worker")
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
@@ -69,9 +70,10 @@ func (e *eventPage) refresh(eventID string) {
 
 	// Set color of event and job boxes to match with current worker status
 	workerPhaseColor := getColorFromWorkerPhase(event.Worker.Status.Phase)
-	e.eventInfo.SetBorderColor(workerPhaseColor)
-	e.workerInfo.SetBorderColor(workerPhaseColor)
-	e.jobsTable.SetBorderColor(workerPhaseColor)
+	e.eventInfo.SetBorderColor(workerPhaseColor).
+		SetTitleColor(workerPhaseColor)
+	e.workerInfo.SetBorderColor(workerPhaseColor).
+		SetTitleColor(workerPhaseColor)
 
 	// Set key handlers
 	e.jobsTable.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
@@ -102,7 +104,7 @@ func (e *eventPage) refresh(eventID string) {
 func (e *eventPage) fillEventInfo(event core.Event) {
 
 	e.eventInfo.Clear()
-	e.eventInfo.SetTitle(fmt.Sprintf("[yellow]Event: [white]%s\n", event.ID))
+	e.eventInfo.SetTitle(event.ID)
 	eventText := fmt.Sprintf(
 		"[yellow]Source: [white]%s\n"+
 			"[yellow]Type: [white]%s\n"+
@@ -127,9 +129,9 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 	e.workerInfo.Clear()
 	e.workerInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Worker Phase: [white]%s\n"+
-				"[yellow]Worker Started: [white]%s\n"+
-				"[yellow]Worker Ended: [white]%s\n",
+			"[yellow]Phase: [white]%s\n"+
+				"[yellow]Started: [white]%s\n"+
+				"[yellow]Ended: [white]%s\n",
 			event.Worker.Status.Phase,
 			formatDateTimeToString(*event.Worker.Status.Started),
 			formatDateTimeToString(*event.Worker.Status.Ended),
