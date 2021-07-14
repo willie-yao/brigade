@@ -70,6 +70,7 @@ func (r *pageRouter) loadJobPage(eventID, jobID string) {
 	r.loadPage(jobPageName, func() {
 		r.jobPage.refresh(eventID, jobID)
 	})
+	go r.jobPage.streamLog(eventID, jobID)
 }
 
 // loadPage can refresh any page and bring it into focus, given the name of the

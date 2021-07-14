@@ -34,6 +34,7 @@ func newJobPage(
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
+		logsClient: apiClient.Events().Logs(),
 	}
 	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
 	j.containersTable.SetBorder(true).SetTitle(" Containers ")
