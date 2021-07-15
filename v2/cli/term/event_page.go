@@ -127,14 +127,22 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 	e.eventInfo.SetText(eventText)
 
 	e.workerInfo.Clear()
+	workerStartTime := ""
+	workerEndTime := ""
+	if event.Worker.Status.Started != nil {
+		workerStartTime = formatDateTimeToString(*event.Worker.Status.Started)
+		if event.Worker.Status.Ended != nil {
+			workerEndTime = formatDateTimeToString(*event.Worker.Status.Ended)
+		}
+	}
 	e.workerInfo.SetText(
 		fmt.Sprintf(
 			"[yellow]Phase: [white]%s\n"+
 				"[yellow]Started: [white]%s\n"+
 				"[yellow]Ended: [white]%s\n",
 			event.Worker.Status.Phase,
-			formatDateTimeToString(*event.Worker.Status.Started),
-			formatDateTimeToString(*event.Worker.Status.Ended),
+			workerStartTime,
+			workerEndTime,
 		),
 	)
 }
