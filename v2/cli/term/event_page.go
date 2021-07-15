@@ -40,7 +40,8 @@ func newEventPage(
 		),
 	}
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
+	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
+		SetTitle("Worker")
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
@@ -66,6 +67,14 @@ func (e *eventPage) refresh(eventID string) {
 	}
 	e.fillEventInfo(event)
 	e.fillJobsTable(event)
+
+	// Set color of event and job boxes to match with current worker status
+	workerPhaseColor := getColorFromWorkerPhase(event.Worker.Status.Phase)
+	e.eventInfo.SetBorderColor(workerPhaseColor).
+		SetTitleColor(workerPhaseColor)
+	e.workerInfo.SetBorderColor(workerPhaseColor).
+		SetTitleColor(workerPhaseColor)
+
 	// Set key handlers
 	e.jobsTable.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
 		switch evt.Key() {
@@ -93,29 +102,53 @@ func (e *eventPage) refresh(eventID string) {
 }
 
 func (e *eventPage) fillEventInfo(event core.Event) {
+
 	e.eventInfo.Clear()
-	e.eventInfo.SetText(
-		fmt.Sprintf(
-			"[yellow]Event: [white]%s\n"+
-				"[yellow]Source: [white]%s\n"+
-				"[yellow]Type: [white]%s\n"+
-				"[yellow]Time Created: [white]%s",
-			event.ID,
-			event.Source,
-			event.Type,
-			formatDateTimeToString(*event.Created),
-		),
+	e.eventInfo.SetTitle(event.ID)
+	eventText := fmt.Sprintf(
+		"[yellow]Source: [white]%s\n"+
+			"[yellow]Type: [white]%s\n"+
+			"[yellow]Time Created: [white]%s",
+		event.Source,
+		event.Type,
+		formatDateTimeToString(*event.Created),
 	)
 
+	// Add qualifiers (if any) to event info box
+	if event.Qualifiers != nil {
+		eventText += "\n[yellow]Qualifiers:"
+		for k, v := range event.Qualifiers {
+			eventText += fmt.Sprintf("\n\t[yellow]%s: [white]%s", k, v)
+		}
+	}
+
+	// Add labels (if any) to event info box
+	if event.Labels != nil {
+		eventText += "\n[yellow]Labels:"
+		for k, v := range event.Labels {
+			eventText += fmt.Sprintf("\n\t[yellow]%s: [white]%s", k, v)
+		}
+	}
+
+	e.eventInfo.SetText(eventText)
+
 	e.workerInfo.Clear()
+	workerStartTime := ""
+	workerEndTime := ""
+	if event.Worker.Status.Started != nil {
+		workerStartTime = formatDateTimeToString(*event.Worker.Status.Started)
+		if event.Worker.Status.Ended != nil {
+			workerEndTime = formatDateTimeToString(*event.Worker.Status.Ended)
+		}
+	}
 	e.workerInfo.SetText(
 		fmt.Sprintf(
-			"[yellow]Worker Phase: [white]%s\n"+
-				"[yellow]Worker Started: [white]%s\n"+
-				"[yellow]Worker Ended: [white]%s\n",
+			"[yellow]Phase: [white]%s\n"+
+				"[yellow]Started: [white]%s\n"+
+				"[yellow]Ended: [white]%s\n",
 			event.Worker.Status.Phase,
-			formatDateTimeToString(*event.Worker.Status.Started),
-			formatDateTimeToString(*event.Worker.Status.Ended),
+			workerStartTime,
+			workerEndTime,
 		),
 	)
 }
