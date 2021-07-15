@@ -23,7 +23,6 @@ type eventPage struct {
 	eventLogs  *tview.TextView
 	logModal   tview.Primitive
 	usage      *tview.TextView
-	logsClient core.LogsClient
 }
 
 // newEventPage returns a custom UI component that displays Event info and a
@@ -40,9 +39,8 @@ func newEventPage(
 		jobsTable:  tview.NewTable().SetSelectable(true, false),
 		eventLogs:  tview.NewTextView().SetDynamicColors(true),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
-			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](W) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
+			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](L) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
-		logsClient: apiClient.Events().Logs(),
 	}
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
 	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
@@ -52,17 +50,14 @@ func newEventPage(
 
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
-	modal := func(p tview.Primitive, width, height int) tview.Primitive {
-		return tview.NewFlex().
+	e.logModal = tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().
+			SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-				AddItem(nil, 0, 1, false).
-				AddItem(p, height, 1, false).
-				AddItem(nil, 0, 1, false), width, 1, false).
-			AddItem(nil, 0, 1, false)
-	}
-
-	e.logModal = modal(e.eventLogs, 85, 25)
+			AddItem(e.eventLogs, 25, 1, false).
+			AddItem(nil, 0, 1, false), 85, 1, false).
+		AddItem(nil, 0, 1, false)
 
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
@@ -106,7 +101,8 @@ func (e *eventPage) refresh(eventID string) {
 			switch evt.Rune() {
 			case 'r', 'R': // Reload
 				e.router.loadEventPage(eventID)
-			case 'w', 'W':
+			case 'l', 'L':
+				e.eventLogs.SetText("Placeholder logs")
 				e.router.ShowPage("Event Logs")
 				e.router.app.SetFocus(e.eventLogs)
 			case 'q', 'Q': // Exit
@@ -220,7 +216,7 @@ func (e *eventPage) fillWorkerInfo(event core.Event) {
 
 // nolint: lll
 func (e *eventPage) streamEventLog(eventID string) {
-	logEntryCh, errCh, err := e.logsClient.Stream(
+	logEntryCh, errCh, err := e.apiClient.Events().Logs().Stream(
 		context.Background(),
 		eventID,
 		&core.LogsSelector{},
@@ -231,6 +227,7 @@ func (e *eventPage) streamEventLog(eventID string) {
 	}
 
 	logText := ""
+	e.eventLogs.SetText(logText)
 
 	for {
 		select {

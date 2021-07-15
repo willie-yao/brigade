@@ -34,7 +34,6 @@ func newJobPage(
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
-		logsClient: apiClient.Events().Logs(),
 	}
 	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
 	j.containersTable.SetBorder(true).SetTitle(" Containers ")
@@ -59,6 +58,7 @@ func (j *jobPage) refresh(eventID, jobName string) {
 	}
 	j.fillJobInfo(eventID, job)
 	j.fillContainersTable(eventID, job)
+	j.logsBox.SetText("Placeholder logs")
 	// Set key handlers
 	j.containersTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
