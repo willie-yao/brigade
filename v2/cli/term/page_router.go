@@ -37,7 +37,8 @@ func NewPageRouter(
 	r.projectPage = newProjectPage(apiClient, app, r)
 	r.AddPage(projectPageName, r.projectPage, true, false)
 	r.eventPage = newEventPage(apiClient, app, r)
-	r.AddPage(eventPageName, r.eventPage, true, false)
+	r.AddPage(eventPageName, r.eventPage, true, false).
+		AddPage("Event Logs", r.eventPage.logModal, true, false)
 	r.jobPage = newJobPage(apiClient, app, r)
 	r.AddPage(jobPageName, r.jobPage, true, false)
 	r.loadProjectsPage()
@@ -63,6 +64,7 @@ func (r *pageRouter) loadEventPage(eventID string) {
 	r.loadPage(eventPageName, func() {
 		r.eventPage.refresh(eventID)
 	})
+	go r.eventPage.streamEventLog(eventID)
 }
 
 // loadJobPage refreshes the job page and brings it into focus.

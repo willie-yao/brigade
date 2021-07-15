@@ -21,6 +21,7 @@ type eventPage struct {
 	workerInfo *tview.TextView
 	jobsTable  *tview.Table
 	eventLogs  *tview.TextView
+	logModal   tview.Primitive
 	usage      *tview.TextView
 	logsClient core.LogsClient
 }
@@ -37,8 +38,9 @@ func newEventPage(
 		eventInfo:  tview.NewTextView().SetDynamicColors(true),
 		workerInfo: tview.NewTextView().SetDynamicColors(true),
 		jobsTable:  tview.NewTable().SetSelectable(true, false),
+		eventLogs:  tview.NewTextView().SetDynamicColors(true),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
-			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
+			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](W) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
 		logsClient: apiClient.Events().Logs(),
 	}
@@ -46,12 +48,22 @@ func newEventPage(
 	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
 		SetTitle("Worker")
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
-	e.eventLogs.SetChangedFunc(
-		func() {
-			e.app.Draw()
-		},
-	)
-	e.eventLogs.SetBorder(true).SetTitle("Logs")
+	e.eventLogs.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
+
+	// Returns a new primitive which puts the provided primitive in the center and
+	// sets its size to the given width and height.
+	modal := func(p tview.Primitive, width, height int) tview.Primitive {
+		return tview.NewFlex().
+			AddItem(nil, 0, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(nil, 0, 1, false).
+				AddItem(p, height, 1, false).
+				AddItem(nil, 0, 1, false), width, 1, false).
+			AddItem(nil, 0, 1, false)
+	}
+
+	e.logModal = modal(e.eventLogs, 85, 25)
+
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -64,7 +76,6 @@ func newEventPage(
 			false,
 		).
 		AddItem(e.jobsTable, 0, 3, true).
-		AddItem(e.eventLogs, 0, 3, false).
 		AddItem(e.usage, 1, 1, false)
 	return e
 }
@@ -95,9 +106,25 @@ func (e *eventPage) refresh(eventID string) {
 			switch evt.Rune() {
 			case 'r', 'R': // Reload
 				e.router.loadEventPage(eventID)
+			case 'w', 'W':
+				e.router.ShowPage("Event Logs")
+				e.router.app.SetFocus(e.eventLogs)
 			case 'q', 'Q': // Exit
 				e.router.exit()
 			}
+		}
+		return evt
+	})
+
+	e.eventLogs.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
+		switch evt.Key() {
+		case // Back
+			tcell.KeyLeft,
+			tcell.KeyDelete,
+			tcell.KeyBackspace,
+			tcell.KeyBackspace2:
+			e.router.HidePage("Event Logs")
+			e.router.app.SetFocus(e.page)
 		}
 		return evt
 	})
