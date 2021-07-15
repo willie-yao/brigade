@@ -20,7 +20,9 @@ type eventPage struct {
 	eventInfo  *tview.TextView
 	workerInfo *tview.TextView
 	jobsTable  *tview.Table
+	eventLogs  *tview.TextView
 	usage      *tview.TextView
+	logsClient core.LogsClient
 }
 
 // newEventPage returns a custom UI component that displays Event info and a
@@ -38,10 +40,18 @@ func newEventPage(
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
+		logsClient: apiClient.Events().Logs(),
 	}
-	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorWhite)
-	e.workerInfo.SetBorder(true).SetTitle(" Worker ")
-	e.jobsTable.SetBorder(true).SetTitle(" Jobs ")
+	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
+	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
+		SetTitle("Worker")
+	e.jobsTable.SetBorder(true).SetTitle("Jobs")
+	e.eventLogs.SetChangedFunc(
+		func() {
+			e.app.Draw()
+		},
+	)
+	e.eventLogs.SetBorder(true).SetTitle("Logs")
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -54,6 +64,7 @@ func newEventPage(
 			false,
 		).
 		AddItem(e.jobsTable, 0, 3, true).
+		AddItem(e.eventLogs, 0, 3, false).
 		AddItem(e.usage, 1, 1, false)
 	return e
 }
@@ -178,6 +189,51 @@ func (e *eventPage) fillWorkerInfo(event core.Event) {
 		event.Worker.Status.Phase,
 	)
 	e.workerInfo.SetText(infoText)
+}
+
+// nolint: lll
+func (e *eventPage) streamEventLog(eventID string) {
+	logEntryCh, errCh, err := e.logsClient.Stream(
+		context.Background(),
+		eventID,
+		&core.LogsSelector{},
+		&core.LogStreamOptions{},
+	)
+	if errCh != nil || err != nil {
+		// TODO: Handle this
+	}
+
+	logText := ""
+
+	for {
+		select {
+		case logEntry, ok := <-logEntryCh:
+			if ok {
+				logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
+				e.eventLogs.SetText(logText)
+			} else {
+				// logEntryCh was closed, but want to keep looping through this select
+				// in case there are pending errors on the errCh still. nil channels are
+				// never readable, so we'll just nil out logEntryCh and move on.
+				logEntryCh = nil
+			}
+		case err, ok := <-errCh:
+			if ok {
+				// TODO: Remove and handle this
+				fmt.Println(err)
+			}
+			// errCh was closed, but want to keep looping through this select in case
+			// there are pending messages on the logEntryCh still. nil channels are
+			// never readable, so we'll just nil out errCh and move on.
+			errCh = nil
+		case <-context.Background().Done():
+			return
+		}
+		// If BOTH logEntryCh and errCh were closed, we're done.
+		if logEntryCh == nil && errCh == nil {
+			// TODO: Handle this
+		}
+	}
 }
 
 func (e *eventPage) fillJobsTable(event core.Event) {
