@@ -121,7 +121,7 @@ func (p *projectPage) refresh(projectID string) {
 
 func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.Clear()
-	p.projectInfo.SetTitle(fmt.Sprintf("[yellow]Project: [white]%s\n", project.ID))
+	p.projectInfo.SetTitle(fmt.Sprintf("[white]%s\n", project.ID))
 	p.projectInfo.SetText(
 		fmt.Sprintf(
 			"[yellow]Description: [white]%s\n"+

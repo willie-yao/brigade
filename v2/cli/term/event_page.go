@@ -115,13 +115,19 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 	)
 
 	// Add qualifiers (if any) to event info box
-	for k, v := range event.Qualifiers {
-		eventText = eventText + fmt.Sprintf("\n[yellow]%s: [white]%s", k, v)
+	if event.Qualifiers != nil {
+		eventText += "\n[yellow]Qualifiers:"
+		for k, v := range event.Qualifiers {
+			eventText += fmt.Sprintf("\n\t[yellow]%s: [white]%s", k, v)
+		}
 	}
 
 	// Add labels (if any) to event info box
-	for k, v := range event.Labels {
-		eventText = eventText + fmt.Sprintf("\n[yellow]%s: [white]%s", k, v)
+	if event.Labels != nil {
+		eventText += "\n[yellow]Labels:"
+		for k, v := range event.Labels {
+			eventText += fmt.Sprintf("\n\t[yellow]%s: [white]%s", k, v)
+		}
 	}
 
 	e.eventInfo.SetText(eventText)
