@@ -15,9 +15,9 @@ const jobPageName = "job"
 // associated logs.
 type jobPage struct {
 	*page
-	jobInfo *tview.TextView
-	logsBox *tview.TextView
-	usage   *tview.TextView
+	jobInfo         *tview.TextView
+	containersTable *tview.Table
+	usage           *tview.TextView
 }
 
 // newJobPage returns a custom UI component that displays Job info and a list of
@@ -28,25 +28,20 @@ func newJobPage(
 	router *pageRouter,
 ) *jobPage {
 	j := &jobPage{
-		page:    newPage(apiClient, app, router),
-		jobInfo: tview.NewTextView().SetDynamicColors(true),
-		logsBox: tview.NewTextView().SetDynamicColors(true),
+		page:            newPage(apiClient, app, router),
+		jobInfo:         tview.NewTextView().SetDynamicColors(true),
+		containersTable: tview.NewTable().SetSelectable(true, false),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
 	}
 	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	j.logsBox.SetChangedFunc(
-		func() {
-			j.app.Draw()
-		},
-	)
-	j.logsBox.SetBorder(true).SetTitle(" Logs ")
+	j.containersTable.SetBorder(true).SetTitle("Containers")
 	// Create the layout
 	j.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(j.jobInfo, 0, 1, false).
-		AddItem(j.logsBox, 0, 5, true).
+		AddItem(j.containersTable, 0, 5, true).
 		AddItem(j.usage, 1, 1, false)
 	return j
 }
@@ -62,9 +57,9 @@ func (j *jobPage) refresh(eventID, jobName string) {
 		// TODO: Handle this
 	}
 	j.fillJobInfo(eventID, job)
-	j.fillLogs(eventID, job.Name)
+	j.fillContainerTable(eventID, job)
 	// Set key handlers
-	j.logsBox.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	j.containersTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyF5: // Reload
 			j.router.loadJobPage(eventID, jobName)
@@ -112,62 +107,49 @@ func (j *jobPage) fillJobInfo(eventID string, job core.Job) {
 	j.jobInfo.SetText(infoText)
 }
 
-func (j *jobPage) fillLogs(eventID, jobName string) {
-	j.logsBox.Clear()
-	go j.streamLog(eventID, jobName)
-}
+func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
+	const (
+		statusCol int = iota
+		nameCol
+	)
 
-// nolint: lll
-func (j *jobPage) streamLog(eventID, jobName string) {
-	// // Initialize control channels for the streaming.
-	// j.stopStreaming = make(chan struct{})
-	// j.canStream = make(chan struct{})
+	j.containersTable.Clear()
+	j.containersTable.SetCell(
+		0,
+		statusCol,
+		&tview.TableCell{
+			Align: tview.AlignCenter,
+			Color: tcell.ColorYellow,
+		},
+	).SetCell(
+		0,
+		nameCol,
+		&tview.TableCell{
+			Text:  "Name",
+			Align: tview.AlignCenter,
+			Color: tcell.ColorYellow,
+		},
+	)
 
-	// // Save the context on goroutine.
-	// ss := j.stopStreaming
-	// cs := j.canStream
-	// l := ctx.Log
+	row := 1
+	icon := getIconFromJobPhase(job.Status.Phase)
+	color := getColorFromJobPhase(job.Status.Phase)
 
-	// // Close our reader when finished streaming, ignore if error.
-	// defer l.Close()
-
-	// // When finished we are ready to stream again. Only one can stream at a time.
-	// defer func() {
-	// 	close(cs)
-	// 	cs = nil
-	// }()
-
-	// // Run a goroutine to check the state of the job on inteval N.
-	// // If job finished we could reload everything and stop our streaming.
-	// go func() {
-	// 	t := time.NewTicker(5 * time.Second)
-	// 	defer t.Stop()
-	// 	for range t.C {
-	// 		// Check if another streaming has been started before finishing this
-	// 		// and we need to stop checking this job status.
-	// 		select {
-	// 		case <-ss:
-	// 			return
-	// 		default:
-	// 		}
-
-	// 		// If not running is time to reload everything.
-	// 		if ctx.Job.Phase != core.JobPhaseRunning {
-	// 			j.Refresh(projectID, eventID, ctx.Job.Name)
-	// 			return
-	// 		}
-	// 	}
-	// }()
-
-	// // Start showing the stream on the textView.
-	// // Ignore the copy error.
-	// j.copyWithAnsiColors(j.logBox, readerFunc(func(p []byte) (n int, err error) {
-	// 	select {
-	// 	// if we don't want to continue reading return 0.
-	// 	case <-ss:
-	// 		return 0, io.EOF
-	// 	default: // Fallback to read.
-	// 		return l.Read(p)
-	// 	}
-	// }))
+	j.containersTable.SetCell(
+		row,
+		statusCol,
+		&tview.TableCell{
+			Text:  icon,
+			Align: tview.AlignLeft,
+			Color: color,
+		},
+	).SetCell(
+		row,
+		nameCol,
+		&tview.TableCell{
+			Text:  job.Spec.PrimaryContainer.ContainerSpec.Image,
+			Align: tview.AlignLeft,
+			Color: color,
+		},
+	)
 }
