@@ -20,7 +20,7 @@ type eventPage struct {
 	eventInfo  *tview.TextView
 	workerInfo *tview.TextView
 	jobsTable  *tview.Table
-	eventLogs  *tview.TextView
+	workerLogs *tview.TextView
 	logModal   tview.Primitive
 	usage      *tview.TextView
 }
@@ -37,16 +37,15 @@ func newEventPage(
 		eventInfo:  tview.NewTextView().SetDynamicColors(true),
 		workerInfo: tview.NewTextView().SetDynamicColors(true),
 		jobsTable:  tview.NewTable().SetSelectable(true, false),
-		eventLogs:  tview.NewTextView().SetDynamicColors(true),
+		workerLogs: tview.NewTextView().SetDynamicColors(true),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](L) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
 	}
-	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	e.workerInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow).
-		SetTitle("Worker")
+	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorWhite)
+	e.workerInfo.SetBorder(true).SetTitle("Worker")
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
-	e.eventLogs.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
+	e.workerLogs.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
 
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
@@ -55,7 +54,7 @@ func newEventPage(
 		AddItem(tview.NewFlex().
 			SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(e.eventLogs, 25, 1, false).
+			AddItem(e.workerLogs, 25, 1, false).
 			AddItem(nil, 0, 1, false), 85, 1, false).
 		AddItem(nil, 0, 1, false)
 
@@ -102,9 +101,9 @@ func (e *eventPage) refresh(eventID string) {
 			case 'r', 'R': // Reload
 				e.router.loadEventPage(eventID)
 			case 'l', 'L':
-				e.eventLogs.SetText("Placeholder logs")
+				e.workerLogs.SetText("Placeholder logs")
 				e.router.ShowPage("Event Logs")
-				e.router.app.SetFocus(e.eventLogs)
+				e.router.app.SetFocus(e.workerLogs)
 			case 'q', 'Q': // Exit
 				e.router.exit()
 			}
@@ -112,7 +111,7 @@ func (e *eventPage) refresh(eventID string) {
 		return evt
 	})
 
-	e.eventLogs.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
+	e.workerLogs.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
 		switch evt.Key() {
 		case // Back
 			tcell.KeyLeft,
@@ -227,14 +226,14 @@ func (e *eventPage) streamEventLog(eventID string) {
 	}
 
 	logText := ""
-	e.eventLogs.SetText(logText)
+	e.workerLogs.SetText(logText)
 
 	for {
 		select {
 		case logEntry, ok := <-logEntryCh:
 			if ok {
 				logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
-				e.eventLogs.SetText(logText)
+				e.workerLogs.SetText(logText)
 			} else {
 				// logEntryCh was closed, but want to keep looping through this select
 				// in case there are pending errors on the errCh still. nil channels are

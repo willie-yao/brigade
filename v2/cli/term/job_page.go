@@ -58,7 +58,6 @@ func (j *jobPage) refresh(eventID, jobName string) {
 	}
 	j.fillJobInfo(eventID, job)
 	j.fillContainersTable(eventID, job)
-	j.logsBox.SetText("Placeholder logs")
 	// Set key handlers
 	j.containersTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
