@@ -40,8 +40,8 @@ func newEventPage(
 		),
 	}
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorWhite)
-	e.workerInfo.SetBorder(true).SetTitle("Worker")
-	e.jobsTable.SetBorder(true).SetTitle("Jobs")
+	e.workerInfo.SetBorder(true).SetTitle(" Worker ")
+	e.jobsTable.SetBorder(true).SetTitle(" Jobs ")
 
 	// Create the layout
 	e.page.Flex = tview.NewFlex().

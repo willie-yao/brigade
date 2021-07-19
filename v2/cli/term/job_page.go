@@ -32,7 +32,7 @@ func newJobPage(
 		jobInfo:         tview.NewTextView().SetDynamicColors(true),
 		containersTable: tview.NewTable().SetSelectable(true, false),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
-			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
+			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](L) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
 	}
 	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
@@ -75,6 +75,8 @@ func (j *jobPage) refresh(eventID, jobName string) {
 			switch event.Rune() {
 			case 'r', 'R': // Reload
 				j.router.loadJobPage(eventID, jobName)
+			case 'l', 'L':
+				j.router.loadLogPage(j.page, eventID, jobName)
 			case 'q', 'Q': // Exit
 				j.router.exit()
 			}

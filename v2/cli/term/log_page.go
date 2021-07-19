@@ -67,10 +67,16 @@ func (l *logPage) refresh(page page, eventID string, jobID string) {
 
 // nolint: lll
 func (l *logPage) streamLogs(eventID string, jobID string) {
+	var logsSelector core.LogsSelector
+	if jobID == "" {
+		logsSelector = core.LogsSelector{}
+	} else {
+		logsSelector = core.LogsSelector{Job: jobID}
+	}
 	logEntryCh, errCh, err := l.apiClient.Events().Logs().Stream(
 		context.Background(),
 		eventID,
-		&core.LogsSelector{},
+		&logsSelector,
 		&core.LogStreamOptions{},
 	)
 	if errCh != nil || err != nil {
