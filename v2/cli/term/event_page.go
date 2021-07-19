@@ -249,6 +249,12 @@ func (e *eventPage) fillJobsTable(event core.Event) {
 	for r, job := range event.Worker.Jobs {
 		row := r + 1
 		color := getColorFromJobPhase(job.Status.Phase)
+		created := ""
+		if job.Created != nil { // Older jobs didn't have this field
+			created = duration.ShortHumanDuration(
+				time.Since(*job.Created).Truncate(time.Second),
+			)
+		}
 		e.jobsTable.SetCell(
 			row,
 			statusCol,
@@ -270,6 +276,14 @@ func (e *eventPage) fillJobsTable(event core.Event) {
 			imageCol,
 			&tview.TableCell{
 				Text:  job.Spec.PrimaryContainer.Image,
+				Align: tview.AlignLeft,
+				Color: color,
+			},
+		).SetCell(
+			row,
+			ageCol,
+			&tview.TableCell{
+				Text:  created,
 				Align: tview.AlignLeft,
 				Color: color,
 			},
