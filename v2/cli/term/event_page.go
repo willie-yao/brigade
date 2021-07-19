@@ -101,9 +101,10 @@ func (e *eventPage) refresh(eventID string) {
 			case 'r', 'R': // Reload
 				e.router.loadEventPage(eventID)
 			case 'l', 'L':
-				e.workerLogs.SetText("Placeholder logs")
-				e.router.ShowPage("Event Logs")
-				e.router.app.SetFocus(e.workerLogs)
+				// e.workerLogs.SetText("Placeholder logs")
+				// e.router.ShowPage("Event Logs")
+				// e.router.app.SetFocus(e.workerLogs)
+				e.router.loadLogPage(e.page, eventID, "")
 			case 'q', 'Q': // Exit
 				e.router.exit()
 			}
