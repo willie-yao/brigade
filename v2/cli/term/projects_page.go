@@ -169,8 +169,8 @@ func (p *projectsPage) fillProjectsTable(
 	for r, project := range projects.Items {
 		row := r + 1
 		var since time.Duration
-		color := unknownColor
-		icon := unknownIcon
+		color := getColorFromWorkerPhase(core.WorkerPhaseUnknown)
+		icon := getIconFromWorkerPhase(core.WorkerPhaseUnknown)
 		lastEvent, found := mostRecentEventByProject[project.ID]
 		if found {
 			color = getColorFromWorkerPhase(lastEvent.Worker.Status.Phase)

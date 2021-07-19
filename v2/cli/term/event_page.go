@@ -108,7 +108,7 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 	eventText := fmt.Sprintf(
 		"[yellow]Source: [white]%s\n"+
 			"[yellow]Type: [white]%s\n"+
-			"[yellow]Time Created: [white]%s",
+			"[yellow]Created: [white]%s",
 		event.Source,
 		event.Type,
 		formatDateTimeToString(*event.Created),

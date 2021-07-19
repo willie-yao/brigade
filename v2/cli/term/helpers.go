@@ -7,99 +7,124 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-const (
-	successIcon = "✔"
-	failedIcon  = "✖"
-	runningIcon = "▶"
-	pendingIcon = "⟳"
-	unknownIcon = "?"
+var colorsByWorkerPhase = map[core.WorkerPhase]tcell.Color{
+	core.WorkerPhaseAborted:          tcell.ColorGrey,
+	core.WorkerPhaseCanceled:         tcell.ColorGrey,
+	core.WorkerPhaseFailed:           tcell.ColorRed,
+	core.WorkerPhasePending:          tcell.ColorWhite,
+	core.WorkerPhaseRunning:          tcell.ColorYellow,
+	core.WorkerPhaseSchedulingFailed: tcell.ColorRed,
+	core.WorkerPhaseStarting:         tcell.ColorYellow,
+	core.WorkerPhaseSucceeded:        tcell.ColorGreen,
+	core.WorkerPhaseTimedOut:         tcell.ColorRed,
+	core.WorkerPhaseUnknown:          tcell.ColorGrey,
+}
 
-	successColor = tcell.ColorGreen
-	failedColor  = tcell.ColorRed
-	runningColor = tcell.ColorYellow
-	pendingColor = tcell.ColorWhite
-	unknownColor = tcell.ColorGrey
+var textColorsByWorkerPhase = map[core.WorkerPhase]string{
+	core.WorkerPhaseAborted:          "[grey]",
+	core.WorkerPhaseCanceled:         "[grey]",
+	core.WorkerPhaseFailed:           "[red]",
+	core.WorkerPhasePending:          "[white]",
+	core.WorkerPhaseRunning:          "[yellow]",
+	core.WorkerPhaseSchedulingFailed: "[red]",
+	core.WorkerPhaseStarting:         "[yellow]",
+	core.WorkerPhaseSucceeded:        "[green]",
+	core.WorkerPhaseTimedOut:         "[red]",
+	core.WorkerPhaseUnknown:          "[grey]",
+}
 
-	successedTextColor = "[green]"
-	failedTextColor    = "[red]"
-	runningTextColor   = "[yellow]"
-	pendingTextColor   = "[white]"
-	unknownTextColor   = "[grey]"
-)
+var iconsByWorkerPhase = map[core.WorkerPhase]string{
+	core.WorkerPhaseAborted:          "✖",
+	core.WorkerPhaseCanceled:         "✖",
+	core.WorkerPhaseFailed:           "✖",
+	core.WorkerPhasePending:          "⟳",
+	core.WorkerPhaseRunning:          "▶",
+	core.WorkerPhaseSchedulingFailed: "✖",
+	core.WorkerPhaseStarting:         "▶",
+	core.WorkerPhaseSucceeded:        "✔",
+	core.WorkerPhaseTimedOut:         "✖",
+	core.WorkerPhaseUnknown:          "?",
+}
+
+var colorsByJobPhase = map[core.JobPhase]tcell.Color{
+	core.JobPhaseAborted:          tcell.ColorGrey,
+	core.JobPhaseCanceled:         tcell.ColorGrey,
+	core.JobPhaseFailed:           tcell.ColorRed,
+	core.JobPhasePending:          tcell.ColorWhite,
+	core.JobPhaseRunning:          tcell.ColorYellow,
+	core.JobPhaseSchedulingFailed: tcell.ColorRed,
+	core.JobPhaseStarting:         tcell.ColorYellow,
+	core.JobPhaseSucceeded:        tcell.ColorGreen,
+	core.JobPhaseTimedOut:         tcell.ColorRed,
+	core.JobPhaseUnknown:          tcell.ColorGrey,
+}
+
+var textColorsByJobPhase = map[core.JobPhase]string{
+	core.JobPhaseAborted:          "[grey]",
+	core.JobPhaseCanceled:         "[grey]",
+	core.JobPhaseFailed:           "[red]",
+	core.JobPhasePending:          "[white]",
+	core.JobPhaseRunning:          "[yellow]",
+	core.JobPhaseSchedulingFailed: "[red]",
+	core.JobPhaseStarting:         "[yellow]",
+	core.JobPhaseSucceeded:        "[green]",
+	core.JobPhaseTimedOut:         "[red]",
+	core.JobPhaseUnknown:          "[grey]",
+}
+
+var iconsByJobPhase = map[core.JobPhase]string{
+	core.JobPhaseAborted:          "✖",
+	core.JobPhaseCanceled:         "✖",
+	core.JobPhaseFailed:           "✖",
+	core.JobPhasePending:          "⟳",
+	core.JobPhaseRunning:          "▶",
+	core.JobPhaseSchedulingFailed: "✖",
+	core.JobPhaseStarting:         "▶",
+	core.JobPhaseSucceeded:        "✔",
+	core.JobPhaseTimedOut:         "✖",
+	core.JobPhaseUnknown:          "?",
+}
 
 func getColorFromWorkerPhase(phase core.WorkerPhase) tcell.Color {
-	switch phase {
-	case core.WorkerPhaseSucceeded:
-		return successColor
-	case core.WorkerPhaseFailed:
-		return failedColor
-	case core.WorkerPhaseRunning:
-		return runningColor
-	case core.WorkerPhasePending:
-		return pendingColor
-	default:
-		return unknownColor
+	if color, ok := colorsByWorkerPhase[phase]; ok {
+		return color
 	}
+	return tcell.ColorGrey
 }
 
-func getColorFromJobPhase(phase core.JobPhase) tcell.Color {
-	switch phase {
-	case core.JobPhaseSucceeded:
-		return successColor
-	case core.JobPhaseFailed:
-		return failedColor
-	case core.JobPhaseRunning:
-		return runningColor
-	case core.JobPhasePending:
-		return pendingColor
-	default:
-		return unknownColor
+func getTextColorFromWorkerPhase(phase core.WorkerPhase) string {
+	if color, ok := textColorsByWorkerPhase[phase]; ok {
+		return color
 	}
-}
-
-func getTextColorFromJobPhase(phase core.JobPhase) string {
-	switch phase {
-	case core.JobPhaseSucceeded:
-		return successedTextColor
-	case core.JobPhaseFailed:
-		return failedTextColor
-	case core.JobPhaseRunning:
-		return runningTextColor
-	case core.JobPhasePending:
-		return pendingTextColor
-	default:
-		return unknownTextColor
-	}
+	return "[grey]"
 }
 
 func getIconFromWorkerPhase(phase core.WorkerPhase) string {
-	switch phase {
-	case core.WorkerPhaseSucceeded:
-		return successIcon
-	case core.WorkerPhaseFailed:
-		return failedIcon
-	case core.WorkerPhaseRunning:
-		return runningIcon
-	case core.WorkerPhasePending:
-		return pendingIcon
-	default:
-		return unknownIcon
+	if icon, ok := iconsByWorkerPhase[phase]; ok {
+		return icon
 	}
+	return "?"
+}
+
+func getColorFromJobPhase(phase core.JobPhase) tcell.Color {
+	if color, ok := colorsByJobPhase[phase]; ok {
+		return color
+	}
+	return tcell.ColorGrey
+}
+
+func getTextColorFromJobPhase(phase core.JobPhase) string {
+	if color, ok := textColorsByJobPhase[phase]; ok {
+		return color
+	}
+	return "[grey]"
 }
 
 func getIconFromJobPhase(phase core.JobPhase) string {
-	switch phase {
-	case core.JobPhaseSucceeded:
-		return successIcon
-	case core.JobPhaseFailed:
-		return failedIcon
-	case core.JobPhaseRunning:
-		return runningIcon
-	case core.JobPhasePending:
-		return pendingIcon
-	default:
-		return unknownIcon
+	if icon, ok := iconsByJobPhase[phase]; ok {
+		return icon
 	}
+	return "[grey]"
 }
 
 // formatDateTimeToString formats a time object to YYYY-MM-DD HH:MM:SS

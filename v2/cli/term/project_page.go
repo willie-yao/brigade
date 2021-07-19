@@ -125,7 +125,7 @@ func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.SetText(
 		fmt.Sprintf(
 			"[yellow]Description: [white]%s\n"+
-				"[yellow]Time Created: [white]%s",
+				"[yellow]Created: [white]%s",
 			project.Description,
 			formatDateTimeToString(*project.Created),
 		),
