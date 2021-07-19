@@ -20,8 +20,6 @@ type eventPage struct {
 	eventInfo  *tview.TextView
 	workerInfo *tview.TextView
 	jobsTable  *tview.Table
-	workerLogs *tview.TextView
-	logModal   tview.Primitive
 	usage      *tview.TextView
 }
 
@@ -37,7 +35,6 @@ func newEventPage(
 		eventInfo:  tview.NewTextView().SetDynamicColors(true),
 		workerInfo: tview.NewTextView().SetDynamicColors(true),
 		jobsTable:  tview.NewTable().SetSelectable(true, false),
-		workerLogs: tview.NewTextView().SetDynamicColors(true),
 		usage: tview.NewTextView().SetDynamicColors(true).SetText(
 			"[yellow](F5) [white]Reload    [yellow](<-/Del) [white]Back    [yellow](L) [white]Logs    [yellow](ESC) [white]Home    [yellow](Q) [white]Quit", // nolint: lll
 		),
@@ -45,18 +42,6 @@ func newEventPage(
 	e.eventInfo.SetBorder(true).SetBorderColor(tcell.ColorWhite)
 	e.workerInfo.SetBorder(true).SetTitle("Worker")
 	e.jobsTable.SetBorder(true).SetTitle("Jobs")
-	e.workerLogs.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
-
-	// Returns a new primitive which puts the provided primitive in the center and
-	// sets its size to the given width and height.
-	e.logModal = tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().
-			SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(e.workerLogs, 25, 1, false).
-			AddItem(nil, 0, 1, false), 85, 1, false).
-		AddItem(nil, 0, 1, false)
 
 	// Create the layout
 	e.page.Flex = tview.NewFlex().
@@ -108,19 +93,6 @@ func (e *eventPage) refresh(eventID string) {
 			case 'q', 'Q': // Exit
 				e.router.exit()
 			}
-		}
-		return evt
-	})
-
-	e.workerLogs.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
-		switch evt.Key() {
-		case // Back
-			tcell.KeyLeft,
-			tcell.KeyDelete,
-			tcell.KeyBackspace,
-			tcell.KeyBackspace2:
-			e.router.HidePage("Event Logs")
-			e.router.app.SetFocus(e.page)
 		}
 		return evt
 	})
@@ -212,52 +184,6 @@ func (e *eventPage) fillWorkerInfo(event core.Event) {
 		event.Worker.Status.Phase,
 	)
 	e.workerInfo.SetText(infoText)
-}
-
-// nolint: lll
-func (e *eventPage) streamEventLog(eventID string) {
-	logEntryCh, errCh, err := e.apiClient.Events().Logs().Stream(
-		context.Background(),
-		eventID,
-		&core.LogsSelector{},
-		&core.LogStreamOptions{},
-	)
-	if errCh != nil || err != nil {
-		// TODO: Handle this
-	}
-
-	logText := ""
-	e.workerLogs.SetText(logText)
-
-	for {
-		select {
-		case logEntry, ok := <-logEntryCh:
-			if ok {
-				logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
-				e.workerLogs.SetText(logText)
-			} else {
-				// logEntryCh was closed, but want to keep looping through this select
-				// in case there are pending errors on the errCh still. nil channels are
-				// never readable, so we'll just nil out logEntryCh and move on.
-				logEntryCh = nil
-			}
-		case err, ok := <-errCh:
-			if ok {
-				// TODO: Remove and handle this
-				fmt.Println(err)
-			}
-			// errCh was closed, but want to keep looping through this select in case
-			// there are pending messages on the logEntryCh still. nil channels are
-			// never readable, so we'll just nil out errCh and move on.
-			errCh = nil
-		case <-context.Background().Done():
-			return
-		}
-		// If BOTH logEntryCh and errCh were closed, we're done.
-		if logEntryCh == nil && errCh == nil {
-			// TODO: Handle this
-		}
-	}
 }
 
 func (e *eventPage) fillJobsTable(event core.Event) {

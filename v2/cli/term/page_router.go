@@ -49,28 +49,28 @@ func NewPageRouter(
 
 // loadProjectsPage refreshes the projects page and brings it into focus.
 func (r *pageRouter) loadProjectsPage() {
-	r.loadPage(projectsPageName, func() {
+	r.loadPage(projectsPageName, true, func() {
 		r.projectsPage.refresh()
 	})
 }
 
 // loadProjectPage refreshes the project page and brings it into focus.
 func (r *pageRouter) loadProjectPage(projectID string) {
-	r.loadPage(projectPageName, func() {
+	r.loadPage(projectPageName, true, func() {
 		r.projectPage.refresh(projectID)
 	})
 }
 
 // loadEventPage refreshes the event page and brings it into focus.
 func (r *pageRouter) loadEventPage(eventID string) {
-	r.loadPage(eventPageName, func() {
+	r.loadPage(eventPageName, true, func() {
 		r.eventPage.refresh(eventID)
 	})
 }
 
 // loadJobPage refreshes the job page and brings it into focus.
 func (r *pageRouter) loadJobPage(eventID, jobID string) {
-	r.loadPage(jobPageName, func() {
+	r.loadPage(jobPageName, true, func() {
 		r.jobPage.refresh(eventID, jobID)
 	})
 }
@@ -81,14 +81,14 @@ func (r *pageRouter) loadLogPage(page *page, eventID, jobID string) {
 	// r.loadPage(logPageName, func() {
 	// 	r.logPage.refresh(*page, eventID, jobID)
 	// })
-	r.showPage(logPageName, r.logPage.logText, func() {
+	r.loadPage(logPageName, false, func() {
 		r.logPage.refresh(*page, eventID, jobID)
 	})
 }
 
 // loadPage can refresh any page and bring it into focus, given the name of the
 // page and a refresh function.
-func (r *pageRouter) loadPage(pageName string, fn func()) {
+func (r *pageRouter) loadPage(pageName string, hideOtherPages bool, fn func()) {
 	// This is a critical section of code. We only want one page auto-refreshing
 	// at a time.
 	r.cancelRefreshFnMu.Lock()
@@ -100,35 +100,12 @@ func (r *pageRouter) loadPage(pageName string, fn func()) {
 	// Build a new context for the auto-refresh goroutine to use
 	var ctx context.Context
 	ctx, r.cancelRefreshFn = context.WithCancel(context.Background())
-	r.SwitchToPage(pageName) // Bring the page into focus
-	fn()                     // Synchronously refresh the page once
-	go func() {              // Start auto-refreshing
-		ticker := time.NewTicker(2 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				fn()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-func (r *pageRouter) showPage(pageName string, focusText *tview.TextView, fn func()) {
-	// This is a critical section of code. We only want one page auto-refreshing
-	// at a time.
-	r.cancelRefreshFnMu.Lock()
-	defer r.cancelRefreshFnMu.Unlock()
-	// If any page is already auto-refreshing, stop it
-	if r.cancelRefreshFn != nil {
-		r.cancelRefreshFn()
+	if hideOtherPages {
+		r.SwitchToPage(pageName) // Focus page and hide background
+	} else {
+		r.ShowPage(pageName) // Focus page and keep background
+		r.app.SetFocus(r.logPage.logText)
 	}
-	// Build a new context for the auto-refresh goroutine to use
-	var ctx context.Context
-	ctx, r.cancelRefreshFn = context.WithCancel(context.Background())
-	r.ShowPage(pageName) // Bring the page into focus
-	r.app.SetFocus(focusText)
 	fn()        // Synchronously refresh the page once
 	go func() { // Start auto-refreshing
 		ticker := time.NewTicker(2 * time.Second)

@@ -14,7 +14,6 @@ const logPageName = "log"
 type logPage struct {
 	*page
 	logText *tview.TextView
-	//logModal tview.Primitive
 }
 
 func newLogPage(
