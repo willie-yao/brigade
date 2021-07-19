@@ -97,8 +97,10 @@ func (e *eventPage) fillEventInfo(event core.Event) {
 	e.eventInfo.Clear()
 	e.eventInfo.SetTitle(fmt.Sprintf(" %s ", event.ID))
 	infoText := fmt.Sprintf(
-		`[grey]Source: [white]%s
+		`[grey]Project: [white]%s
+[grey]Source: [white]%s
 [grey]Type: [white]%s`,
+		event.ProjectID,
 		event.Source,
 		event.Type,
 	)
