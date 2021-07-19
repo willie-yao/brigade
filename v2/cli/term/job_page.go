@@ -111,6 +111,7 @@ func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
 	const (
 		statusCol int = iota
 		nameCol
+		imageCol
 	)
 
 	j.containersTable.Clear()
@@ -126,6 +127,14 @@ func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
 		nameCol,
 		&tview.TableCell{
 			Text:  "Name",
+			Align: tview.AlignCenter,
+			Color: tcell.ColorYellow,
+		},
+	).SetCell(
+		0,
+		imageCol,
+		&tview.TableCell{
+			Text:  "Image",
 			Align: tview.AlignCenter,
 			Color: tcell.ColorYellow,
 		},
@@ -147,9 +156,38 @@ func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
 		row,
 		nameCol,
 		&tview.TableCell{
+			Text:  job.Name,
+			Align: tview.AlignLeft,
+			Color: color,
+		},
+	).SetCell(
+		row,
+		imageCol,
+		&tview.TableCell{
 			Text:  job.Spec.PrimaryContainer.ContainerSpec.Image,
 			Align: tview.AlignLeft,
 			Color: color,
 		},
 	)
+
+	for k, v := range job.Spec.SidecarContainers {
+		row++
+		j.containersTable.SetCell(
+			row,
+			nameCol,
+			&tview.TableCell{
+				Text:  k,
+				Align: tview.AlignLeft,
+				Color: color,
+			},
+		).SetCell(
+			row,
+			imageCol,
+			&tview.TableCell{
+				Text:  v.Image,
+				Align: tview.AlignLeft,
+				Color: color,
+			},
+		)
+	}
 }
