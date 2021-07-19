@@ -36,7 +36,7 @@ func newJobPage(
 		),
 	}
 	j.jobInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	j.containersTable.SetBorder(true).SetTitle("Containers")
+	j.containersTable.SetBorder(true).SetTitle(" Containers ")
 	// Create the layout
 	j.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
