@@ -36,7 +36,7 @@ func newProjectsPage(
 		projectsTable:          tview.NewTable().SetSelectable(true, false),
 		usage:                  tview.NewTextView().SetDynamicColors(true),
 	}
-	p.projectsTable.SetBorder(true).SetTitle("Projects")
+	p.projectsTable.SetBorder(true).SetTitle(" Projects ")
 	// Create the layout
 	p.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).

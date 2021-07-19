@@ -39,8 +39,8 @@ func newProjectPage(
 		eventsTable:          tview.NewTable().SetSelectable(true, false),
 		usage:                tview.NewTextView().SetDynamicColors(true),
 	}
-	p.projectInfo.SetBorder(true).SetBorderColor(tcell.ColorYellow)
-	p.eventsTable.SetBorder(true).SetTitle("Events")
+	p.projectInfo.SetBorder(true).SetBorderColor(tcell.ColorWhite)
+	p.eventsTable.SetBorder(true).SetTitle(" Events ")
 	// Create the layout
 	p.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -121,15 +121,24 @@ func (p *projectPage) refresh(projectID string) {
 
 func (p *projectPage) fillProjectInfo(project core.Project) {
 	p.projectInfo.Clear()
-	p.projectInfo.SetTitle(fmt.Sprintf("[white]%s\n", project.ID))
-	p.projectInfo.SetText(
-		fmt.Sprintf(
-			"[yellow]Description: [white]%s\n"+
-				"[yellow]Created: [white]%s",
-			project.Description,
-			formatDateTimeToString(*project.Created),
-		),
+	p.projectInfo.SetTitle(fmt.Sprintf(" %s ", project.ID))
+	infoText := fmt.Sprintf("[grey]Description: [white]%s", project.Description)
+	if project.Spec.WorkerTemplate.Git != nil {
+		infoText = fmt.Sprintf("%s\n[grey]Git:", infoText)
+		if project.Spec.WorkerTemplate.Git.CloneURL != "" {
+			infoText = fmt.Sprintf(
+				"%s\n  [grey]Clone URL: [white]%s",
+				infoText,
+				project.Spec.WorkerTemplate.Git.CloneURL,
+			)
+		}
+	}
+	infoText = fmt.Sprintf(
+		"%s\n[grey]Created: %s",
+		infoText,
+		formatDateTimeToString(project.Created),
 	)
+	p.projectInfo.SetText(infoText)
 }
 
 func (p *projectPage) fillUsage(events core.EventList) {

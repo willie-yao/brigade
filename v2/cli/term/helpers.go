@@ -129,6 +129,9 @@ func getIconFromJobPhase(phase core.JobPhase) string {
 
 // formatDateTimeToString formats a time object to YYYY-MM-DD HH:MM:SS
 // and returns it as a string
-func formatDateTimeToString(time time.Time) string {
+func formatDateTimeToString(time *time.Time) string {
+	if time == nil {
+		return ""
+	}
 	return time.UTC().Format("2006-01-02 15:04:05")
 }

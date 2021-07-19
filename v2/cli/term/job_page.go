@@ -41,7 +41,7 @@ func newJobPage(
 			j.app.Draw()
 		},
 	)
-	j.logsBox.SetBorder(true).SetTitle("Logs")
+	j.logsBox.SetBorder(true).SetTitle(" Logs ")
 	// Create the layout
 	j.page.Flex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -61,7 +61,7 @@ func (j *jobPage) refresh(eventID, jobName string) {
 	if !found {
 		// TODO: Handle this
 	}
-	j.fillJobInfo(job)
+	j.fillJobInfo(eventID, job)
 	j.fillLogs(eventID, job.Name)
 	// Set key handlers
 	j.logsBox.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -88,19 +88,28 @@ func (j *jobPage) refresh(eventID, jobName string) {
 	})
 }
 
-func (j *jobPage) fillJobInfo(job core.Job) {
-	color := getColorFromJobPhase(job.Status.Phase)
-	textColor := getTextColorFromJobPhase(job.Status.Phase)
-	j.jobInfo.SetBorderColor(color)
+func (j *jobPage) fillJobInfo(eventID string, job core.Job) {
+	j.jobInfo.SetTitle(fmt.Sprintf(" %s: %s ", eventID, job.Name))
+	j.jobInfo.SetBorderColor(getColorFromJobPhase(job.Status.Phase))
 	j.jobInfo.Clear()
-	info := fmt.Sprintf(
-		"%[1]sJob: [white]%[2]s\n%[1]sStarted: [white]%[3]s\n%[1]sDuration: [white]%[4]v", // nolint: lll
-		textColor,
-		job.Name,
-		job.Status.Started,
-		job.Status.Ended.Sub(*job.Status.Started),
+	infoText := fmt.Sprintf(
+		`[grey]Primary Image: [white]%s
+[grey]Created: [white]%s
+[grey]Started: [white]%s
+[grey]Ended: [white]%s`,
+		job.Spec.PrimaryContainer.Image,
+		"TODO", // We need a job created field; it doesn't exist yet
+		formatDateTimeToString(job.Status.Started),
+		formatDateTimeToString(job.Status.Ended),
 	)
-	j.jobInfo.SetText(info)
+	if job.Status.Started != nil && job.Status.Ended != nil {
+		infoText = fmt.Sprintf(
+			"%s\n[grey]Duration: [white]%v",
+			infoText,
+			job.Status.Ended.Sub(*job.Status.Started),
+		)
+	}
+	j.jobInfo.SetText(infoText)
 }
 
 func (j *jobPage) fillLogs(eventID, jobName string) {
