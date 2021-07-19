@@ -57,7 +57,7 @@ func (j *jobPage) refresh(eventID, jobName string) {
 		// TODO: Handle this
 	}
 	j.fillJobInfo(eventID, job)
-	j.fillContainerTable(eventID, job)
+	j.fillContainersTable(eventID, job)
 	// Set key handlers
 	j.containersTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -107,7 +107,7 @@ func (j *jobPage) fillJobInfo(eventID string, job core.Job) {
 	j.jobInfo.SetText(infoText)
 }
 
-func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
+func (j *jobPage) fillContainersTable(eventID string, job core.Job) {
 	const (
 		statusCol int = iota
 		nameCol
@@ -178,7 +178,7 @@ func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
 			&tview.TableCell{
 				Text:  k,
 				Align: tview.AlignLeft,
-				Color: color,
+				Color: tcell.ColorWhite,
 			},
 		).SetCell(
 			row,
@@ -186,7 +186,7 @@ func (j *jobPage) fillContainerTable(eventID string, job core.Job) {
 			&tview.TableCell{
 				Text:  v.Image,
 				Align: tview.AlignLeft,
-				Color: color,
+				Color: tcell.ColorWhite,
 			},
 		)
 	}
