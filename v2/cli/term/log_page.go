@@ -44,7 +44,7 @@ func newLogPage(
 }
 
 // refresh refreshes Event info and associated Jobs and repaints the page.
-func (l *logPage) refresh(page page, eventID string, jobID string, quit chan bool) {
+func (l *logPage) refresh(page page, eventID string, jobID string) {
 
 	// TODO: Implement log streaming and uncomment
 	// go l.streamLogs(eventID, jobID)
@@ -60,7 +60,6 @@ func (l *logPage) refresh(page page, eventID string, jobID string, quit chan boo
 			tcell.KeyBackspace2:
 			l.router.HidePage(logPageName)
 			l.router.app.SetFocus(page)
-			quit <- true
 		}
 		return evt
 	})
@@ -81,7 +80,7 @@ func (l *logPage) streamLogs(eventID string, jobID string) {
 		&logsSelector,
 		&core.LogStreamOptions{},
 	)
-	if errCh != nil || err != nil {
+	if err != nil {
 		// TODO: Handle this
 		log.Fatal(err)
 	}
@@ -116,6 +115,7 @@ func (l *logPage) streamLogs(eventID string, jobID string) {
 		// If BOTH logEntryCh and errCh were closed, we're done.
 		if logEntryCh == nil && errCh == nil {
 			// TODO: Handle this
+			l.logText.SetText(logText)
 			return
 		}
 	}

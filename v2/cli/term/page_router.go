@@ -78,20 +78,11 @@ func (r *pageRouter) loadJobPage(eventID, jobID string) {
 // loadLogPage loads a floating window that displays logs and brings it into
 // focus.
 func (r *pageRouter) loadLogPage(page *page, eventID, jobID string) {
-	quit := make(chan bool)
-	r.loadPage(logPageName, func() {
-		r.logPage.refresh(*page, eventID, jobID, quit)
-	}, r.logPage.logText)
-	go func() {
-		select {
-		case <-quit:
-			return
-		default:
-			r.logPage.streamLogs(eventID, jobID)
-		}
-	}()
 
 	r.logPage.streamLogs(eventID, jobID)
+	r.loadPage(logPageName, func() {
+		r.logPage.refresh(*page, eventID, jobID)
+	}, r.logPage.logText)
 }
 
 // loadPage can refresh any page and bring it into focus, given the name of the
