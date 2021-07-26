@@ -91,8 +91,8 @@ func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
 	for {
 		select {
 		case logEntry, ok := <-logEntryCh:
+			logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
 			if ok {
-				logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
 				l.logText.SetText(logText)
 			} else {
 				// logEntryCh was closed, but want to keep looping through this select
