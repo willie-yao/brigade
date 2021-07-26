@@ -67,7 +67,7 @@ func (l *logPage) refresh(page page, eventID string, jobID string) {
 }
 
 // nolint: lll
-func (l *logPage) streamLogs(eventID string, jobID string) {
+func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
 	var logsSelector core.LogsSelector
 	if jobID == "" {
 		logsSelector = core.LogsSelector{}
@@ -116,7 +116,8 @@ func (l *logPage) streamLogs(eventID string, jobID string) {
 		if logEntryCh == nil && errCh == nil {
 			// TODO: Handle this
 			l.logText.SetText(logText)
-			return
+			quit <- true
+			// return
 		}
 	}
 }

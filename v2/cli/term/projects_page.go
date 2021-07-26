@@ -175,7 +175,11 @@ func (p *projectsPage) fillProjectsTable(
 		if found {
 			color = getColorFromWorkerPhase(lastEvent.Worker.Status.Phase)
 			icon = getIconFromWorkerPhase(lastEvent.Worker.Status.Phase)
-			since = time.Since(*lastEvent.Worker.Status.Started).Truncate(time.Second)
+			if lastEvent.Worker.Status.Started != nil {
+				since = time.Since(
+					*lastEvent.Worker.Status.Started,
+				).Truncate(time.Second)
+			}
 		}
 		p.projectsTable.SetCell(
 			row,
