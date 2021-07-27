@@ -59,9 +59,13 @@ func newEventPage(
 	return e
 }
 
+func (e *eventPage) load(ctx context.Context, eventID string) {
+	e.refresh(ctx, eventID)
+}
+
 // refresh refreshes Event info and associated Jobs and repaints the page.
-func (e *eventPage) refresh(eventID string) {
-	event, err := e.apiClient.Events().Get(context.TODO(), eventID)
+func (e *eventPage) refresh(ctx context.Context, eventID string) {
+	event, err := e.apiClient.Events().Get(ctx, eventID)
 	if err != nil {
 		// TODO: Handle this
 	}

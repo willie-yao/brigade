@@ -45,10 +45,14 @@ func newProjectsPage(
 	return p
 }
 
+func (p *projectsPage) load(ctx context.Context) {
+	p.refresh(ctx)
+}
+
 // refresh refreshes the list of all Projects and repaints the page.
-func (p *projectsPage) refresh() {
+func (p *projectsPage) refresh(ctx context.Context) {
 	projects, err := p.apiClient.Projects().List(
-		context.TODO(),
+		ctx,
 		nil,
 		&meta.ListOptions{
 			Continue: p.projectsContinueValues[len(p.projectsContinueValues)-1],
@@ -61,7 +65,7 @@ func (p *projectsPage) refresh() {
 	mostRecentEventByProject := map[string]core.Event{}
 	for _, project := range projects.Items {
 		events, err := p.apiClient.Events().List(
-			context.TODO(),
+			ctx,
 			&core.EventsSelector{
 				ProjectID: project.ID,
 			},
