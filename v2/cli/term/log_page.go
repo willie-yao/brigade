@@ -15,7 +15,7 @@ const logPageName = "log"
 type logPage struct {
 	*page
 	logText   *tview.TextView
-	logString string
+	logString string // TODO: Do we need this?
 }
 
 func newLogPage(
@@ -45,14 +45,9 @@ func newLogPage(
 	return l
 }
 
-// refresh refreshes Event info and associated Jobs and repaints the page.
-func (l *logPage) refresh(page page, eventID string, jobID string) {
-
-	// TODO: Implement log streaming and uncomment
-	// go l.streamLogs(eventID, jobID)
-
-	l.logText.SetText(l.logString)
-
+func (l *logPage) load(ctx context.Context, eventID string, jobID string) {
+	l.logText.Clear()
+	l.app.SetFocus(l.logText)
 	l.logText.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
 		switch evt.Key() {
 		case // Back
@@ -60,16 +55,24 @@ func (l *logPage) refresh(page page, eventID string, jobID string) {
 			tcell.KeyDelete,
 			tcell.KeyBackspace,
 			tcell.KeyBackspace2:
-			l.router.HidePage(logPageName)
-			l.router.app.SetFocus(page)
+			if jobID == "" {
+				l.router.loadEventPage(eventID)
+			} else {
+				l.router.loadJobPage(eventID, jobID)
+			}
 		}
 		return evt
 	})
+	go l.streamLogs(ctx, eventID, jobID)
+}
 
+// refresh refreshes Event info and associated Jobs and repaints the page.
+func (l *logPage) refresh(ctx context.Context, eventID string, jobID string) {
 }
 
 // nolint: lll
-func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
+func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) {
+	l.logString = ""
 	var logsSelector core.LogsSelector
 	if jobID == "" {
 		logsSelector = core.LogsSelector{}
@@ -110,15 +113,12 @@ func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
 			// there are pending messages on the logEntryCh still. nil channels are
 			// never readable, so we'll just nil out errCh and move on.
 			errCh = nil
-		case <-context.Background().Done():
+		case <-ctx.Done():
 			return
 		}
 		// If BOTH logEntryCh and errCh were closed, we're done.
 		if logEntryCh == nil && errCh == nil {
-			// TODO: Handle this
-			l.logText.SetText(l.logString)
-			quit <- true
-			// return
+			break
 		}
 	}
 }

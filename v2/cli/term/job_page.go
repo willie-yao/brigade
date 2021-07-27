@@ -46,9 +46,13 @@ func newJobPage(
 	return j
 }
 
+func (j *jobPage) load(ctx context.Context, eventID, jobName string) {
+	j.refresh(ctx, eventID, jobName)
+}
+
 // refresh refreshes Job info and repaints the page.
-func (j *jobPage) refresh(eventID, jobName string) {
-	event, err := j.apiClient.Events().Get(context.TODO(), eventID)
+func (j *jobPage) refresh(ctx context.Context, eventID, jobName string) {
+	event, err := j.apiClient.Events().Get(ctx, eventID)
 	if err != nil {
 		// TODO: Handle this
 	}

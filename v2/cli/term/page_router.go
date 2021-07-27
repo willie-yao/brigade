@@ -49,62 +49,83 @@ func NewPageRouter(
 
 // loadProjectsPage refreshes the projects page and brings it into focus.
 func (r *pageRouter) loadProjectsPage() {
-	r.loadPage(projectsPageName, func() {
-		r.projectsPage.refresh()
-	})
+	r.loadPage(
+		projectsPageName,
+		func(ctx context.Context) {
+			r.projectsPage.load(ctx)
+		},
+		func(ctx context.Context) {
+			r.projectsPage.refresh(ctx)
+		},
+		true,
+	)
 }
 
 // loadProjectPage refreshes the project page and brings it into focus.
 func (r *pageRouter) loadProjectPage(projectID string) {
-	r.loadPage(projectPageName, func() {
-		r.projectPage.refresh(projectID)
-	})
+	r.loadPage(
+		projectPageName,
+		func(ctx context.Context) {
+			r.projectPage.load(ctx, projectID)
+		},
+		func(ctx context.Context) {
+			r.projectPage.refresh(ctx, projectID)
+		},
+		true,
+	)
 }
 
 // loadEventPage refreshes the event page and brings it into focus.
 func (r *pageRouter) loadEventPage(eventID string) {
-	r.loadPage(eventPageName, func() {
-		r.eventPage.refresh(eventID)
-	})
+	r.loadPage(
+		eventPageName,
+		func(ctx context.Context) {
+			r.eventPage.load(ctx, eventID)
+		},
+		func(ctx context.Context) {
+			r.eventPage.refresh(ctx, eventID)
+		},
+		true,
+	)
 }
 
 // loadJobPage refreshes the job page and brings it into focus.
 func (r *pageRouter) loadJobPage(eventID, jobID string) {
-	r.loadPage(jobPageName, func() {
-		r.jobPage.refresh(eventID, jobID)
-	})
+	r.loadPage(
+		jobPageName,
+		func(ctx context.Context) {
+			r.jobPage.load(ctx, eventID, jobID)
+		},
+		func(ctx context.Context) {
+			r.jobPage.refresh(ctx, eventID, jobID)
+		},
+		true,
+	)
 }
 
 // loadLogPage loads a floating window that displays logs and brings it into
 // focus.
 func (r *pageRouter) loadLogPage(page *page, eventID, jobID string) {
 	// go r.logPage.streamLogs(eventID, jobID, quit)
-	r.loadPage(logPageName, func() {
-		r.logPage.refresh(*page, eventID, jobID)
-	}, r.logPage.logText)
-
-	r.logPage.logText.Clear()
-	r.logPage.logString = ""
-
-	quit := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-quit:
-				return
-			default:
-				r.logPage.streamLogs(eventID, jobID, quit)
-			}
-		}
-	}()
+	r.loadPage(
+		logPageName,
+		func(ctx context.Context) {
+			r.logPage.load(ctx, eventID, jobID)
+		},
+		func(ctx context.Context) {
+			r.logPage.refresh(ctx, eventID, jobID)
+		},
+		false,
+	)
 }
 
 // loadPage can refresh any page and bring it into focus, given the name of the
 // page and a refresh function.
 func (r *pageRouter) loadPage(
 	pageName string,
-	fn func(),
-	focusPage ...tview.Primitive,
+	loadFn func(context.Context),
+	refreshFn func(context.Context),
+	hideOthers bool,
 ) {
 	// This is a critical section of code. We only want one page auto-refreshing
 	// at a time.
@@ -117,19 +138,18 @@ func (r *pageRouter) loadPage(
 	// Build a new context for the auto-refresh goroutine to use
 	var ctx context.Context
 	ctx, r.cancelRefreshFn = context.WithCancel(context.Background())
-	if focusPage == nil {
+	if hideOthers {
 		r.SwitchToPage(pageName) // Focus page and hide background
 	} else {
 		r.ShowPage(pageName) // Focus page and keep background
-		r.app.SetFocus(focusPage[0])
 	}
-	fn()        // Synchronously refresh the page once
+	loadFn(ctx) // Synchronously load the page once
 	go func() { // Start auto-refreshing
 		ticker := time.NewTicker(2 * time.Second)
 		for {
 			select {
 			case <-ticker.C:
-				fn()
+				refreshFn(ctx)
 			case <-ctx.Done():
 				return
 			}

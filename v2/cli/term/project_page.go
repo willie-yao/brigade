@@ -50,20 +50,24 @@ func newProjectPage(
 	return p
 }
 
+func (p *projectPage) load(ctx context.Context, projectID string) {
+	p.refresh(ctx, projectID)
+}
+
 // refresh refreshes Projects info and associated Events and repaints the page.
-func (p *projectPage) refresh(projectID string) {
+func (p *projectPage) refresh(ctx context.Context, projectID string) {
 	if projectID != p.currentProjectID {
 		p.currentProjectID = projectID
 		// "" == continue value for first page
 		p.eventsContinueValues = []string{""}
 	}
 
-	project, err := p.apiClient.Projects().Get(context.TODO(), projectID)
+	project, err := p.apiClient.Projects().Get(ctx, projectID)
 	if err != nil {
 		// TODO: Handle this
 	}
 	events, err := p.apiClient.Events().List(
-		context.TODO(),
+		ctx,
 		&core.EventsSelector{
 			ProjectID: projectID,
 		},
