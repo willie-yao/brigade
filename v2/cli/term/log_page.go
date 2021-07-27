@@ -80,7 +80,7 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 		logsSelector = core.LogsSelector{Job: jobID}
 	}
 	logEntryCh, errCh, err := l.apiClient.Events().Logs().Stream(
-		context.Background(),
+		ctx,
 		eventID,
 		&logsSelector,
 		&core.LogStreamOptions{Follow: true},
@@ -90,14 +90,13 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 		log.Fatal(err)
 	}
 
-	// l.logText.SetText(logText)
-
 	for {
 		select {
 		case logEntry, ok := <-logEntryCh:
 			l.logString = fmt.Sprintf("%s\n%s", l.logString, logEntry.Message)
 			if ok {
 				l.logText.SetText(l.logString)
+				l.app.Draw()
 			} else {
 				// logEntryCh was closed, but want to keep looping through this select
 				// in case there are pending errors on the errCh still. nil channels are
@@ -107,7 +106,7 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 		case err, ok := <-errCh:
 			if ok {
 				// TODO: Remove and handle this
-				fmt.Println(err)
+				log.Println(err)
 			}
 			// errCh was closed, but want to keep looping through this select in case
 			// there are pending messages on the logEntryCh still. nil channels are
