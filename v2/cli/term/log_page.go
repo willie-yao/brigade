@@ -66,6 +66,8 @@ func (l *logPage) refresh(page page, eventID string, jobID string) {
 		return evt
 	})
 
+	l.app.SetFocus(l.logText)
+
 }
 
 // nolint: lll
