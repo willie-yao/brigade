@@ -14,7 +14,8 @@ const logPageName = "log"
 
 type logPage struct {
 	*page
-	logText *tview.TextView
+	logText   *tview.TextView
+	logString string
 }
 
 func newLogPage(
@@ -28,6 +29,7 @@ func newLogPage(
 	}
 
 	l.logText.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
+	l.logString = "Waiting for logs..."
 
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
@@ -49,7 +51,7 @@ func (l *logPage) refresh(page page, eventID string, jobID string) {
 	// TODO: Implement log streaming and uncomment
 	// go l.streamLogs(eventID, jobID)
 
-	// l.logText.SetText("Placeholder logs.")
+	l.logText.SetText(l.logString)
 
 	l.logText.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
 		switch evt.Key() {
@@ -78,22 +80,21 @@ func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
 		context.Background(),
 		eventID,
 		&logsSelector,
-		&core.LogStreamOptions{},
+		&core.LogStreamOptions{Follow: true},
 	)
 	if err != nil {
 		// TODO: Handle this
 		log.Fatal(err)
 	}
 
-	logText := ""
-	l.logText.SetText(logText)
+	// l.logText.SetText(logText)
 
 	for {
 		select {
 		case logEntry, ok := <-logEntryCh:
-			logText = fmt.Sprintf("%s\n%s", logText, logEntry.Message)
+			l.logString = fmt.Sprintf("%s\n%s", l.logString, logEntry.Message)
 			if ok {
-				l.logText.SetText(logText)
+				l.logText.SetText(l.logString)
 			} else {
 				// logEntryCh was closed, but want to keep looping through this select
 				// in case there are pending errors on the errCh still. nil channels are
@@ -115,7 +116,7 @@ func (l *logPage) streamLogs(eventID string, jobID string, quit chan bool) {
 		// If BOTH logEntryCh and errCh were closed, we're done.
 		if logEntryCh == nil && errCh == nil {
 			// TODO: Handle this
-			l.logText.SetText(logText)
+			l.logText.SetText(l.logString)
 			quit <- true
 			// return
 		}

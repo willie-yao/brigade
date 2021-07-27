@@ -84,6 +84,7 @@ func (r *pageRouter) loadLogPage(page *page, eventID, jobID string) {
 	}, r.logPage.logText)
 
 	r.logPage.logText.Clear()
+	r.logPage.logString = ""
 
 	quit := make(chan bool)
 	go func() {
