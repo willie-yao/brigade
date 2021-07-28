@@ -7,7 +7,7 @@ import (
 
 	"github.com/brigadecore/brigade/sdk/v2/core"
 	"github.com/brigadecore/brigade/sdk/v2/meta"
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"k8s.io/apimachinery/pkg/util/duration"
 )

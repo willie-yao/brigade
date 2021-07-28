@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/brigadecore/brigade/sdk/v2/core"
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -55,6 +55,7 @@ func (l *logPage) load(ctx context.Context, eventID string, jobID string) {
 			tcell.KeyDelete,
 			tcell.KeyBackspace,
 			tcell.KeyBackspace2:
+			l.app.Sync()
 			if jobID == "" {
 				l.router.loadEventPage(eventID)
 			} else {
