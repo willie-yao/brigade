@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/brigadecore/brigade/sdk/v2/core"
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 )
 
 var colorsByWorkerPhase = map[core.WorkerPhase]tcell.Color{
