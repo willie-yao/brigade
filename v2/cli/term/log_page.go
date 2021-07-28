@@ -87,8 +87,7 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 		&core.LogStreamOptions{Follow: true},
 	)
 	if err != nil {
-		// TODO: Handle this
-		log.Fatal(err)
+		l.logText.SetText(err.Error())
 	}
 
 	for {
