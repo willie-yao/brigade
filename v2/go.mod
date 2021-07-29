@@ -15,6 +15,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gdamore/tcell v1.4.0
+	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-billy/v5 v5.0.0
 	github.com/go-git/go-git/v5 v5.2.0
@@ -23,12 +24,11 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.0.0-20200921180117-858c6e7e6b7e // indirect
-	github.com/rivo/tview v0.0.0-20180728193050-6614b16d9037
+	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rs/cors v1.7.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.6.1

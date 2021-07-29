@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/brigadecore/brigade/sdk/v2/core"
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
