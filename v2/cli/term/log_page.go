@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/armon/circbuf"
 	"github.com/brigadecore/brigade/sdk/v2/core"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -14,8 +16,9 @@ const logPageName = "log"
 
 type logPage struct {
 	*page
-	logText   *tview.TextView
-	logString string // TODO: Do we need this?
+	logText  *tview.TextView
+	logBuf   *circbuf.Buffer
+	maxBytes int64
 }
 
 func newLogPage(
@@ -28,8 +31,11 @@ func newLogPage(
 		logText: tview.NewTextView().SetDynamicColors(true),
 	}
 
+	// GitHub places a restriction on the text field for a Check Run at 65535
+	// characters, so we use this as a maximum and truncate if needed.
+	l.maxBytes = 65535
 	l.logText.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
-	l.logString = "Waiting for logs..."
+	l.logBuf, _ = circbuf.NewBuffer(l.maxBytes)
 
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
@@ -64,7 +70,8 @@ func (l *logPage) load(ctx context.Context, eventID string, jobID string) {
 		}
 		return evt
 	})
-	go l.streamLogs(ctx, eventID, jobID)
+	go l.streamLogsToBuffer(ctx, eventID, jobID)
+	go l.writeLogs(ctx)
 }
 
 // refresh refreshes Event info and associated Jobs and repaints the page.
@@ -72,8 +79,8 @@ func (l *logPage) refresh(ctx context.Context, eventID string, jobID string) {
 }
 
 // nolint: lll
-func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) {
-	l.logString = ""
+func (l *logPage) streamLogsToBuffer(ctx context.Context, eventID string, jobID string) {
+	l.logBuf.Reset()
 	var logsSelector core.LogsSelector
 	if jobID == "" {
 		logsSelector = core.LogsSelector{}
@@ -93,10 +100,15 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 	for {
 		select {
 		case logEntry, ok := <-logEntryCh:
-			l.logString = fmt.Sprintf("%s\n%s", l.logString, logEntry.Message)
 			if ok {
-				l.logText.SetText(l.logString)
-				l.app.Draw()
+				if _, err = l.logBuf.Write([]byte(logEntry.Message)); err != nil {
+					l.logText.SetText(err.Error())
+					break
+				}
+				if _, err = l.logBuf.Write([]byte("\n")); err != nil {
+					l.logText.SetText(err.Error())
+					break
+				}
 			} else {
 				// logEntryCh was closed, but want to keep looping through this select
 				// in case there are pending errors on the errCh still. nil channels are
@@ -118,6 +130,24 @@ func (l *logPage) streamLogs(ctx context.Context, eventID string, jobID string) 
 		// If BOTH logEntryCh and errCh were closed, we're done.
 		if logEntryCh == nil && errCh == nil {
 			break
+		}
+	}
+}
+
+func (l *logPage) writeLogs(ctx context.Context) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if l.logBuf.TotalWritten() > l.maxBytes {
+				l.logText.SetText(fmt.Sprintf("(Previous text omitted)\n %s", l.logBuf.String()))
+			} else {
+				l.logText.SetText(l.logBuf.String())
+			}
+			l.app.Draw()
+		case <-ctx.Done():
+			return
 		}
 	}
 }

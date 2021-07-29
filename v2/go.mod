@@ -10,6 +10,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/bacongobbler/browser v1.1.0
 	github.com/brigadecore/brigade/sdk/v2 v2.0.0-20200923171232-9f56c474d8bf
 	github.com/coreos/go-oidc v2.2.1+incompatible
