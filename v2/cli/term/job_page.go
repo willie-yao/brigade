@@ -54,11 +54,13 @@ func (j *jobPage) load(ctx context.Context, eventID, jobName string) {
 func (j *jobPage) refresh(ctx context.Context, eventID, jobName string) {
 	event, err := j.apiClient.Events().Get(ctx, eventID)
 	if err != nil {
-		// TODO: Handle this
+		// TODO: This return is a bandaid fix to stop nil pointer dereference!
+		return
 	}
 	job, found := event.Worker.Job(jobName)
 	if !found {
-		// TODO: Handle this
+		// TODO: This return is a bandaid fix to stop nil pointer dereference!
+		return
 	}
 	j.fillJobInfo(eventID, job)
 	j.fillContainersTable(eventID, job)

@@ -31,11 +31,8 @@ func newLogPage(
 		logText: tview.NewTextView().SetDynamicColors(true),
 	}
 
-	// GitHub places a restriction on the text field for a Check Run at 65535
-	// characters, so we use this as a maximum and truncate if needed.
 	l.maxBytes = 65535
 	l.logText.SetBorder(true).SetTitle("Logs (<-/Del) Quit")
-	l.logBuf, _ = circbuf.NewBuffer(l.maxBytes)
 
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
@@ -52,6 +49,7 @@ func newLogPage(
 }
 
 func (l *logPage) load(ctx context.Context, eventID string, jobID string) {
+
 	l.logText.Clear()
 	l.app.SetFocus(l.logText)
 	l.logText.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
@@ -70,6 +68,14 @@ func (l *logPage) load(ctx context.Context, eventID string, jobID string) {
 		}
 		return evt
 	})
+
+	var err error
+	l.logBuf, err = circbuf.NewBuffer(l.maxBytes)
+	if err != nil {
+		l.logText.SetText(err.Error())
+		return
+	}
+
 	go l.streamLogsToBuffer(ctx, eventID, jobID)
 	go l.writeLogs(ctx)
 }

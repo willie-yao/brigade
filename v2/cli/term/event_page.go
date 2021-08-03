@@ -67,7 +67,8 @@ func (e *eventPage) load(ctx context.Context, eventID string) {
 func (e *eventPage) refresh(ctx context.Context, eventID string) {
 	event, err := e.apiClient.Events().Get(ctx, eventID)
 	if err != nil {
-		// TODO: Handle this
+		// TODO: This return is a bandaid fix to stop nil pointer dereference!
+		return
 	}
 	e.fillEventInfo(event)
 	e.fillWorkerInfo(event)
