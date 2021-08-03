@@ -82,7 +82,7 @@ func (j *jobPage) refresh(ctx context.Context, eventID, jobName string) {
 			case 'r', 'R': // Reload
 				j.router.loadJobPage(eventID, jobName)
 			case 'l', 'L':
-				j.router.loadLogPage(j.page, eventID, jobName)
+				j.router.loadLogPage(eventID, jobName)
 			case 'q', 'Q': // Exit
 				j.router.exit()
 			}

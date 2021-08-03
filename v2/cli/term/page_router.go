@@ -105,8 +105,7 @@ func (r *pageRouter) loadJobPage(eventID, jobID string) {
 
 // loadLogPage loads a floating window that displays logs and brings it into
 // focus.
-func (r *pageRouter) loadLogPage(page *page, eventID, jobID string) {
-	// go r.logPage.streamLogs(eventID, jobID, quit)
+func (r *pageRouter) loadLogPage(eventID, jobID string) {
 	r.loadPage(
 		logPageName,
 		func(ctx context.Context) {
