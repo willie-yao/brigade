@@ -99,7 +99,7 @@ func (j *jobPage) fillJobInfo(eventID string, job core.Job) {
 [grey]Started: [white]%s
 [grey]Ended: [white]%s`,
 		job.Spec.PrimaryContainer.Image,
-		"TODO", // We need a job created field; it doesn't exist yet
+		formatDateTimeToString(job.Created),
 		formatDateTimeToString(job.Status.Started),
 		formatDateTimeToString(job.Status.Ended),
 	)
